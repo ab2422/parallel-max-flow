@@ -1,0 +1,41 @@
+This file describes an experiment for assignment problem suggested by 
+Peter Shor.   
+
+The original instances represent random points in the plane.  Half are
+red and half are blue.  From these random points a bipartite network 
+is constructed which contains all red-to-blue edges.  Edge costs are
+Euclidean distances between the vertices, truncated to an integer.  
+
+To perform this experiment, you'll need the following files:
+
+   pub/netflow/generators/matching/dcube.c  : A c program to generate 
+                                              geometric instances.
+
+   pub/netflow/generators/geomasn.a         : An Awk program to convert 
+                                              geometric to bipartite networks
+                                              in .asn format.
+
+1)Compile dcube.c.    cc dcube.c -lm -o dcube 
+2)The program dcube accepts commands on its standard input and generates
+  the graph on standard output.  Use the following commands, with settings
+  described below. (See the code for descriptions of other commands that
+  you may wish to use.) 
+
+    nodes N   
+    maxloc L
+
+   N  : Generate problem sizes in powers of 2, as described in the 
+         Core Experiment document.
+ 
+   L  : Maximum value of the x and y coordinates.  Generate 2 classes
+         of graphs:
+
+         +Assign-Geom-LoCost:  Set L = 10^4
+  
+         +Assign-Geom-HiCost:  Set L = 10^6
+
+3)  The awk program geomasm.a converts geometric files to bipartite
+    networks for the assignment problem.  To use it, type
+
+      awk -f geomasn.a <test.geom >test.asn
+

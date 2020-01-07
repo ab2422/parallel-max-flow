@@ -1,0 +1,19 @@
+
+This directory contains problem instances for the matching problem, from
+real applications problems. 
+
+r442.geom  A 422-node geometric matching problem.  Contributed by 
+           Bill Cook.
+
+r1002.geom  A 1002-node geometric matching problem. Contributed by 
+            Bill Cook
+
+r2392.geom  A 2392-node geometric matching problem. Contributed by 
+            Bill Cook
+
+r20726.geom A big geometric matching problem from a line plotter. Bill
+            again.
+
+tsp.instances  An anonymous ftp site where you can find travelling 
+	    salesman and related problems. (TSPLIB)
+

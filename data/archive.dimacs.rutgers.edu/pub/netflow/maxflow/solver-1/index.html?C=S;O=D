@@ -1,0 +1,29 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+ <head>
+  <title>Index of /pub/netflow/maxflow/solver-1</title>
+ </head>
+ <body>
+<h1>Index of /pub/netflow/maxflow/solver-1</h1>
+  <table>
+   <tr><th valign="top"><img src="/icons/blank.gif" alt="[ICO]"></th><th><a href="?C=N;O=A">Name</a></th><th><a href="?C=M;O=A">Last modified</a></th><th><a href="?C=S;O=A">Size</a></th><th><a href="?C=D;O=A">Description</a></th></tr>
+   <tr><th colspan="5"><hr></th></tr>
+<tr><td valign="top"><img src="/icons/back.gif" alt="[PARENTDIR]"></td><td><a href="/pub/netflow/maxflow/">Parent Directory</a></td><td>&nbsp;</td><td align="right">  - </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="goldberg_c.shell">goldberg_c.shell</a></td><td align="right">1991-03-22 14:05  </td><td align="right"> 28K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/text.gif" alt="[TXT]"></td><td><a href="flow.c">flow.c</a></td><td align="right">1991-03-22 14:06  </td><td align="right">9.1K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/text.gif" alt="[TXT]"></td><td><a href="glib.c">glib.c</a></td><td align="right">1991-03-22 14:06  </td><td align="right">7.8K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="input.form">input.form</a></td><td align="right">1991-03-22 14:06  </td><td align="right">2.5K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="readme">readme</a></td><td align="right">1991-03-22 14:06  </td><td align="right">2.0K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/text.gif" alt="[TXT]"></td><td><a href="graphtypes.h">graphtypes.h</a></td><td align="right">1991-03-22 14:06  </td><td align="right">1.3K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="output.form">output.form</a></td><td align="right">1991-03-22 14:06  </td><td align="right">848 </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/text.gif" alt="[TXT]"></td><td><a href="matrix.h">matrix.h</a></td><td align="right">1991-03-22 14:06  </td><td align="right">757 </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/text.gif" alt="[TXT]"></td><td><a href="matmain.c">matmain.c</a></td><td align="right">1991-03-22 14:06  </td><td align="right">458 </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/text.gif" alt="[TXT]"></td><td><a href="main.c">main.c</a></td><td align="right">1991-03-22 14:06  </td><td align="right">438 </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/text.gif" alt="[TXT]"></td><td><a href="matfl.c">matfl.c</a></td><td align="right">1991-03-22 14:06  </td><td align="right">386 </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="makefile">makefile</a></td><td align="right">1991-03-22 14:06  </td><td align="right">213 </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="test.in">test.in</a></td><td align="right">1991-03-22 14:06  </td><td align="right">127 </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="test.mat">test.mat</a></td><td align="right">1991-03-22 14:06  </td><td align="right"> 25 </td><td>&nbsp;</td></tr>
+   <tr><th colspan="5"><hr></th></tr>
+</table>
+<address>Apache/2.4.10 (Debian) Server at archive.dimacs.rutgers.edu Port 80</address>
+</body></html>

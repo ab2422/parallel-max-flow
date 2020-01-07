@@ -1,0 +1,18 @@
+
+The file netflow.tar.Z  (located in the parent of this directory) 
+is a compressed tar file containing all the netflow subdirectories and 
+files.  It is updated periodically. If you want it, do the following: 
+
+Set ftp mode to binary.
+Get the file to your local system (from the parent directory of netflow). 
+
+$ uncompress netflow.tar     (note no .Z in command)
+$ mkdir subdir 
+$ cd subdir
+$ tar xf ../netflow.tar  
+
+You will now have the entire netflow directory structure in your 
+subdirectory. 
+
+
+

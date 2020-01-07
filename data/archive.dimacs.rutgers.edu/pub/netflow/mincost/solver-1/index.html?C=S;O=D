@@ -1,0 +1,31 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+ <head>
+  <title>Index of /pub/netflow/mincost/solver-1</title>
+ </head>
+ <body>
+<h1>Index of /pub/netflow/mincost/solver-1</h1>
+  <table>
+   <tr><th valign="top"><img src="/icons/blank.gif" alt="[ICO]"></th><th><a href="?C=N;O=A">Name</a></th><th><a href="?C=M;O=A">Last modified</a></th><th><a href="?C=S;O=A">Size</a></th><th><a href="?C=D;O=A">Description</a></th></tr>
+   <tr><th colspan="5"><hr></th></tr>
+<tr><td valign="top"><img src="/icons/back.gif" alt="[PARENTDIR]"></td><td><a href="/pub/netflow/mincost/">Parent Directory</a></td><td>&nbsp;</td><td align="right">  - </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="netflo_f.shell">netflo_f.shell</a></td><td align="right">1991-02-28 14:56  </td><td align="right">182K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/f.gif" alt="[   ]"></td><td><a href="netflo.for">netflo.for</a></td><td align="right">1991-02-28 14:53  </td><td align="right"> 84K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="netflo.f">netflo.f</a></td><td align="right">1991-02-28 14:53  </td><td align="right"> 80K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/compressed.gif" alt="[   ]"></td><td><a href="netrans.tar.Z">netrans.tar.Z</a></td><td align="right">1991-08-19 11:00  </td><td align="right"> 35K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="netflo.inp">netflo.inp</a></td><td align="right">1991-02-28 14:53  </td><td align="right">4.7K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="netflo.out">netflo.out</a></td><td align="right">1991-02-28 14:53  </td><td align="right">4.1K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="input.form">input.form</a></td><td align="right">1991-02-28 14:53  </td><td align="right">3.0K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="readme">readme</a></td><td align="right">1991-12-16 18:27  </td><td align="right">2.1K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/text.gif" alt="[TXT]"></td><td><a href="min_to_flo.sh">min_to_flo.sh</a></td><td align="right">1991-07-30 16:18  </td><td align="right">2.0K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="output.form">output.form</a></td><td align="right">1991-02-28 14:53  </td><td align="right">1.3K</td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="trans.a">trans.a</a></td><td align="right">1991-02-28 14:56  </td><td align="right">969 </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="flo_to_std.a">flo_to_std.a</a></td><td align="right">1991-02-28 14:53  </td><td align="right">724 </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="format.a">format.a</a></td><td align="right">1991-02-28 14:53  </td><td align="right">464 </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="del_dup.a">del_dup.a</a></td><td align="right">1991-02-28 14:53  </td><td align="right">224 </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="flo_to_std">flo_to_std</a></td><td align="right">1991-02-28 14:53  </td><td align="right">138 </td><td>&nbsp;</td></tr>
+<tr><td valign="top"><img src="/icons/unknown.gif" alt="[   ]"></td><td><a href="min_to_flo">min_to_flo</a></td><td align="right">1991-02-28 14:53  </td><td align="right">134 </td><td>&nbsp;</td></tr>
+   <tr><th colspan="5"><hr></th></tr>
+</table>
+<address>Apache/2.4.10 (Debian) Server at archive.dimacs.rutgers.edu Port 80</address>
+</body></html>

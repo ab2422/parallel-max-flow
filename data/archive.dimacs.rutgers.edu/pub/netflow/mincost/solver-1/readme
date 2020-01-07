@@ -1,0 +1,53 @@
+-------------------------------------------------------------------------
+The NETFLOW_F.shell file contains programs and files relating to the NETFLO
+program written by R. V. Helgason and J. L. Kennington in 1976.  
+-------------------------------------------------------------------------
+
+For more information see pages 244-256 in ``Algorithms for Network
+Programming'' by Kennington and Helgason, John Wiley, 1980.
+
+
+REQUIRED FILES:
+        readme input.form output.form NETFLO.INP NETFLO.OUT NETFLO.FOR
+		netflo.f min_to_flo flo_to_std format.a trans.a 
+                flo_to_std.a del_dup.a
+
+TO GET THESE FILES:
+        Run the "NETFLOW_F.shell" file in the /bin/sh shell. 
+		(It will unwrap itself.)
+		Or copy the files themselves.
+
+ANOTHER FILE: 
+        netrans.tar.Z:  contains C source code for programs to convert
+                 between DIMACS and netflow.f formats.  These programs
+                 are more efficient than the awk programs provided
+                 in the above shell script, and should be used for large
+                 instances.  Use the Unix ``tar'' command to unbundle
+                 these files.  Contributed by Geraldo Viega
+                    ilan34@violet.berkeley.edu
+
+FILE DESCRIPTIONS: 
+		input.form:  A description of the NETFLO input format, taken from the
+		               user guide. Usage of the input format converter. 
+
+		output.form:   A description of the NETFLO output format, from the user
+		               guide. Usage of the output format converter.
+
+		NETFLO.INP:    The required name of the input file. Contains a sample
+		               input file.  
+
+		NETFLO.OUT:    The output file. This file will be created (and overwritten)
+		               by the program at each invocation. 
+		
+		NETFLO.FOR:    The original NENETFLO.FORTFLO code, compatible with IBM PC running
+		               under Microsoft FORTRAN Optimizing Compiler.  The output
+		               appears in file 6. 
+
+		netflo.f  :    Code modified for compatibility with Unix. See program 
+		               header.  To compile:   f77 netflo.f -o netflo
+
+
+/ This README file was written at DIMACS, and based on experiments with the
+code. /
+ 
+

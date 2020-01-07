@@ -1,0 +1,58 @@
+#This awk program is the first part of a system to translate
+#output files created by Helgassen and Kennington's NETFLO program
+#to the DIMACS Standard Output format.  
+#It does no error checking. 
+
+BEGIN {
+		rows = -3;
+}
+NR == 1  {
+}
+
+NR == 2 {
+		Nodenum = $1;
+}
+
+NF == 2 { 
+		if ($1 == 0 && $2 == 0){
+				noderow = 1;
+				i = 0;		
+				next;
+		}
+}
+
+
+noderow == 1 {
+		i += NF;
+		if ( i == Nodenum){
+				arcrows = 1;
+				noderow = 0;
+				j = 0;
+				next;
+		}
+}
+
+
+arcrows == 1 {
+		if ($1 == 0){
+				arcrows = 0;
+				rows = NR;
+		}else
+				print "f",$1,  $2, $3, "0";
+}
+
+
+rows+1 == NR || ((NR - rows > 2) && (NR - rows < 7)){
+		j++;
+		next;
+}
+j == 5 {
+		print "f", $1,$2, $3, $4
+}
+
+rows+2 == NR { 
+				print "a", $3
+}
+
+	 
+	   

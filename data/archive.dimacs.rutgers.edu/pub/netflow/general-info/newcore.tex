@@ -1,0 +1,476 @@
+\documentstyle[11pt]{article}
+\oddsidemargin-.35in
+\textwidth 18cm
+\topmargin -1.123in
+\textheight 24cm
+\baselineskip 20pt
+
+\begin{document}
+
+\title{  The First DIMACS International \\
+Algorithm Implementation Challenge: \\
+The Benchmark Experiments} 
+
+\author{}
+\maketitle
+
+\section{Introduction}
+
+This document describes a set of benchmark problem instances for 
+each of the following combinatorial problems: {\em maximum flows},
+{\em assignment}, {\em minimum-cost flows}, and {\em cardinality matching}. 
+Participants in the DIMACS
+Implementation Challenge are asked to test their implementations on 
+these instances in order to enhance the comparability of results 
+across implementations and machines.  
+
+The problem generators and instances are available
+via anonymous ftp from {\tt dimacs.rutgers.edu}.   
+All instances are compatible with the DIMACS Challenge input format. 
+In addition, codes for several solvers have been submitted by 
+Challenge participants;  feel free to use them in your 
+comparisons if appropriate. 
+
+For more information about obtaining and using 
+the generators, see Section 6 and the DIMACS Challenge 
+documents  {\em Problem Definitions and Input Formats}, and 
+{\em The Core Experiments}. 
+
+\paragraph{What To Report.} 
+To maximize the comparability of results, please use the 
+following guidelines for performing experiments and reporting
+program performance.  
+\begin{itemize}
+\item  The {\bf running time} is defined as the CPU time taken by the
+program to find and to report a single integer solution (such as total
+flow or total matching weight) for a single input instance.  This does
+{\em not} include the time to generate problems, the 
+time to translate from one input format to another, or the time to 
+read in the problem. 
+
+For implementations on parallel architectures, the {\em parallel speedup} 
+should also be reported:  how does running time improve as the number of 
+processors increases?  
+
+\item  For most problem classes described below, 
+several random trials should be performed at each data point. 
+For these problems the {\em mean running time} should be reported, along with 
+an estimation of the {\em variance}.  The number of trials needed to
+achieve low variance will depend upon the particular experiment; 
+some simple evaluation procedures are described in the 
+vDIMACS document {\em The Core Experiments.} 
+
+\item  Try to produce a {\bf fair test} of each program being studied.  
+Any program can be fine-tuned to give improved performance for a 
+restricted class of inputs.  For reporting of the experiments below,
+any technique or strategy for tuning a program is acceptable in a 
+fair test as long as {\em in theory, the application of that technique
+could be automated.}   For example, application of a 
+rule such as ``for network density below $20n$,  
+parameter $k$ should be set to 0'' is acceptable.   It is 
+not acceptable to report the ``best running time found''  over
+several parameter settings.  As
+a rule of thumb, a reader unfamiliar with program details should 
+be able to replicate the strategy. 
+\end{itemize} 
+
+\section{Maximum Flows}
+
+This section describes the testbed set for maximum flow problems.  
+In the list below, the name of the file containing the 
+instance generator is given in {\bf bold } font.  See Section
+6 and the DIMACS {\em Core Experiments} document for 
+more information about obtaining and using these 
+instance generators.  
+
+\paragraph{Problem Sizes.}  For each random class below except (1), 
+set the number of nodes $N$ to the values $1024, 4096, 16384 . . .$,
+increasing by multiples of $4$ to as large can be accommodated 
+by the implementation.   
+
+\begin{enumerate} 
+\item {\bf Acyclic-Dense}.  Use {\tt ac.c} (in C) or {\tt ac-max.p} 
+(in Pascal). 
+These are fully dense acyclic networks with random arc costs in the range
+$[ 1, 10^6]$.   The C program accepts command-line arguments: 
+\begin{verbatim}
+ac  nodes  seed
+\end{verbatim} 
+For this problem class, set {\tt nodes} to 
+512,  1024, 2048, ... increasing by powers of 2 as high as the 
+implementation can accommodate.   The {\tt seed} should be a large
+integer, different for each test.  
+
+With the Pascal version, use the options Fully Dense (type {\tt f} at
+the prompt) and Random Capacities (type {\tt n} when asked about 
+special capacities).   Set Maximum Capacity to $10^6$. 
+
+\item {\bf Washington-Line-Moderate}.  Use {\tt washington.c}. 
+About half of these randomly-generated (moderately sparse) networks 
+have cut near the source, and about half have cut near the sink.  
+Goldberg's algorithm is sensitive to the location of the cut and
+can produce a bimodal distribution of running times for this data.   
+Check for bimodal data before reporting mean running time---report two 
+means (separating points above and below the median) if appropriate.  
+The program accepts command line arguments: 
+\begin{verbatim} 
+washington  function  arg1 arg2 arg3
+\end{verbatim}
+For this problem class set {\tt function}$=6$.  For problem size 
+$N = 2^x$, set 
+{\tt arg1}$= 2^{x-2}$ and {\tt arg2}$ = 4$.  Set 
+{\tt arg3}$ = 2^{(x/2) -2} = \sqrt{n}/4$.
+
+\item {\bf Genrmf-Long}.  Use {\tt genrmf.c}. 
+This program accepts command line arguments:
+\begin{verbatim}
+genrmf [-out out_file]   -a frame_size   -b depth 
+                         -c1 cap_range1  -c2 cap_range 2
+\end{verbatim} 
+For problem size $N = 2^x$,  let $y = x/4$. 
+Set {\tt frame\_size}$ = 2^{y}$
+and {\tt depth}$ = 2^{2y}$.  Set {\tt cap\_range1}$ = 1$ 
+and {\tt cap\_range2}$ = 10^4$.  
+
+\item{\bf Genrmf-Wide}.  Use {\tt genrmf.c} as above.  
+For problem size  $N = 2^x$, let $y = x/5$.   Set 
+{\tt frame\_size}$  = 2^{2y}$ and {\tt depth}$ = 2^{y}$.  
+Let {\tt cap\_range1}$ = 1$ and {\tt cap\_range2}$ = 10^4$.  
+\end{enumerate} 
+
+\section{Assignment Problems}
+
+This section describes the testbed instances for assignment problems. 
+See Section 6 for more information about obtaining and using the generators. 
+
+\paragraph{Problem Sizes.}    
+For each random class below, set the number of nodes $N$ to 
+256, 1024, 4196, $\ldots$, increasing by powers of 4 as high
+as the implementation can accommodate. 
+
+\begin{enumerate} 
+\item {\bf Assign-Xhi-Degree.}  Use {\tt assign.c} with the following
+commands for problem size $N$. 
+\begin{verbatim}
+nodes (N)
+sources (N/2)
+complete
+maxcost 100000
+seed (X)
+\end{verbatim}
+
+\item {\bf Assign-Lo-Cost.}  Use {\tt assign.c} with the following
+commands.
+\begin{verbatim}
+nodes (N)
+sources (N/2)
+degree  (2 log_2 N)
+maxcost 100
+seed (X)
+\end{verbatim}
+
+\item {\bf Assign-Hi-Cost.}  Use {\tt assign.c} with the following
+commands.
+\begin{verbatim}
+nodes (N)
+sources (N/2)
+degree (2 log_2 N)
+maxcost 100000000
+\end{verbatim} 
+
+\item {\bf Assign-Two-Cost.}  Use the instances generated for 
+Assign-Lo-Cost.  A graph {\tt g.asn} is transformed using the
+awk command {\tt awk -f twocost.a <g.asn >gt.asn}.  The resulting graphs
+have all costs either 100 or 100000000.  These instances are hard
+for auction algorithms. 
+
+\item {\bf Assign-Fix-Cost.}  Use {\tt assign.c} with the following
+commands.  For these graphs, the cost of edge $(i,j)$ is set to 
+$i*j*maxcost$.
+\begin{verbatim}
+nodes   (N)
+sources (N/2)
+degree  (N/16)
+maxcost 100
+multiple 
+seed  (X) 
+\end{verbatim}
+
+\item {\bf Assign-Geometric.}  Use {\tt dcube.c} with the following
+commands to generate random points in 2-space with coordinates in the
+range $1..10^6$. 
+\begin{verbatim} 
+nodes  (N)
+dimension 2
+maxloc  1000000
+seed   (X) 
+\end{verbatim} 
+The resulting graph {\tt g.geom} can be converted to an assignment
+problem with {\tt awk -f geomasn.a <g.geom >g.asn}.  Half the points
+are red and half blue, arcs connect red points to blue, and arc costs
+correspond to Euclidean distances. 
+\end{enumerate}
+
+\section{Minimum Cost Flow Problems}
+
+This section describes the testbed instances for minimum-cost flow
+solvers.   
+For each problem class, set the number 
+of nodes $N$ to 256, 512, 1024, $\ldots$, increasing by multiples of 
+2 as high as can be accommodated by the program.  
+
+\begin{enumerate} 
+
+\item {\bf Grid-Density-8.}  Use {\tt goto.c}.  
+This generator produces a capacitated transportation
+problem on a Grid-On-Torus network.  
+The generator has five input parameters, which are read on 
+standard input: 
+\begin{description}
+\item {\tt N:}  Number of nodes.  
+\item{\tt M:}  Number of edges.  
+\item{\tt MAXCAP:} Maximum capacity. 
+    Some arcs are generated with capacity larger than {\em MAXCAP}
+    to ensure feasibility of the problem. 
+\item{\tt MAXCOST:} Maximum arc cost.  
+\item{\tt SEED: }  A large integer seed for random number generator.  
+\end{description} 
+Set {\tt MAXCAP}$ = 16384$, and {\tt MAXCOST}$ = 4096$.  
+For each problem size $N$, set {\tt M}$ = 8N$. 
+
+\item {\bf Grid-Density-16}.  Use {\tt goto.c} as above, except
+set {\tt M}$=16N$.
+
+\item {\bf Grid-Increasing-Density.}  Use {\tt goto.c } as described
+above.  For each problem size $N$, set {\tt M}$ = {\rm ceiling}(N^{3/2})$, 
+set {\tt MAXCAP}$ = 16384$, and {\tt MAXCOST}$ = 4096$.  
+
+\item {\bf Grid-Square}. Use {\tt ggraph.f}.  The program reads the following
+parameters from standard input to produce a graph laid out on a grid. 
+\begin{description}
+\item {\tt X}:  Grid height.
+\item {\tt Y}:  Grid width. 
+\item {\tt MAXCAP}:  Capacities are uniform on [0, MAXCAP]
+\item {\tt MAXCOST}: Costs are uniform on [0, MAXCOST]
+\item {\tt SEED}: A large positive integer. 
+\end{description} 
+Set {\tt MAXCAP}$=10^4$ and set {\tt MAXCOST}$=10^4$.   This program
+uses portable random number generator {\tt universal.c}, which will produce
+{\tt identical} outputs on widely different architectures.  For 
+random trials with this program, use the seeds 270001, 270002, $\ldots$. 
+
+For each problem size $N$, set {\tt X}$ = \sqrt{N}$ and 
+set {\tt Y}$ = \sqrt{N}$.    
+
+\item {\bf Grid-Long}.  Use {\tt ggraph.f} as above (with the 
+same values for {\tt MAXCAP}, {\tt MAXCOST}, and
+{\tt SEED}).   For each problem size $N = 2^{8 + b}$, 
+set {\tt X}$= 2^4 = 16$, and and set {\tt Y} to 32, 64, 128, $\ldots$.  
+
+\item {\bf Grid-Wide}.  Use {\tt ggraph.f} as above, but exchange 
+the settings of {\tt X} and {\tt Y}. 
+
+\item {\bf CAPT-Lo-Bits.}  Use {\tt capt.f}.   
+A network in DIMACS format is written to the file {\tt fort.11};
+two other files {\tt fort.9} (not in ASCII) and {\tt fort.10} are 
+also created.  This Fortran program reads from an input file {\tt fort.8}.
+The program reads only the first line; other lines are ignored.  
+An example input line (with annotations) is given below:
+\begin{verbatim} 
+0.123456785 500   500   3162 1      1      1000   14   0.5   5     0.0632455532
+seed        nsrce nsink flow ipsrce ipsink intlen cost  D  distrbn density
+123456789-123456789-123456789-123456789-123456789-123456789-123456789-123456789
+\end{verbatim} 
+
+The program generates arc-costs each with {\tt COST} bits---
+in the above example, costs range from 0 to $2^{14}$.  Each bit in 
+an arc-cost is 1 with probability {\tt D}.  
+The number of arcs generated is approximately $density * nsource * nsink$.  
+For each problem size $N$, use the following input 
+settings (where $X$ is a Real seed for the random number generator).
+
+\begin{verbatim} 
+X           N/2   N/2   N/4  1      1      1000    4   0.7   5     0.5
+seed        nsrce nsink flow ipsrce ipsink intlen cost  D  distrbn density
+\end{verbatim}
+
+\item {\bf CAPT-Hi-Bits.} Use {\tt capt.f} as above.  For each problem size
+$N$, use the following input settings.
+\begin{verbatim} 
+X           N/2   N/2   N/4  1      1      1000    14   0.7   5     0.5
+seed        nsrce nsink flow ipsrce ipsink intlen cost  D  distrbn density
+\end{verbatim}
+
+\item{\bf GTE-Instances}. The ten problems below represent instances
+from real problems.   These have been observed to produce large 
+variation in running times for the RELAX-III code: the suffix 
+numbers indicate running time (in milliseconds) observed in one test. 
+All graphs have the same 49-node structure, with differences only in capacity
+and demands. 
+
+\begin{verbatim}
+gte_bad.20
+gte_bad.60
+gte_bad.200
+gte_bad.510
+gte_bad.1160
+gte_bad.6830
+gte_bad.15710
+gte_bad.35620
+gte_bad.469010
+gte_bad.508829
+\end{verbatim} 
+
+\item{ \tt NETGEN-Subset}.   Use {\bf netgen.c} with the parameter 
+setting given below to generate a subest of the standard 
+NETGEN 40-problem testbed.  Each input set comprises two lines:  the 
+random number 
+seed on one line followed by values for several parameters.   The 
+first number of the second line of each gives the problem number from the
+standard NETGEN set.  (The file {\tt eight.problems}, available from 
+DIMACS, contains the parameter settings listed below). 
+\begin{verbatim}
+13502460
+11  400  200  200  1500 1 10000      200    0    0   0    0        0         0
+
+13502460
+20  400    8   60  1416 1 10000   400000    5   50  30   40    16000     30000
+
+13502460
+27  400    4   12  2676 1 10000   400000    0    0  30   80    20000    120000
+
+13502460   
+28 1000   50   50  2900 1 10000  1000000    0    0   0    0        0         0
+
+13502460   
+32 1500   75   75  4342 1 10000  1500000    0    0   0    0        0         0
+
+13502460   
+36 8000  200 1000 15000 1 10000  4000000  100  300   0    0       30        30
+
+13502460   
+38 3000  125  500 35000 1 10000  2000000   25   50   0    0        0         0
+
+13502460 
+40 3000  100  300 23000 1 10000  2000000   50  100   0    1     2000      4000
+\end{verbatim} 
+
+\end{enumerate} 
+
+\section{Cardinality Matching}
+
+This section describes a set of testbed instances for the 
+cardinality matching problem.  For more information on obtaining
+and using the programs, see Section 6.  All instances listed 
+below are in DIMACS {\tt .edge} format. 
+
+\paragraph{Problem Sizes.}  For each problem class, set the
+number of nodes $N$ to 512, 1024, 2048, $\ldots$, increasing by 
+powers of two as high as can be accommodated by the implementation. 
+
+\begin{enumerate}
+\item {\bf Random-Degree-2}.  Use {\tt random.c} with the commands
+below to generate random graphs with average degree 2 
+(edges = avg\_degree*nodes/2).  The random number seed $X$ is a large
+positive integer. 
+\begin{verbatim} 
+nodes (N)
+edges (N)
+maxcost 100000
+seed  (X) 
+\end{verbatim}
+
+\item {\bf Random-Degree-4}.
+Use {\tt random.c} with the commands
+below to generate random graphs with average degree 4
+(edges = avg\_degree*nodes/2).  
+\begin{verbatim} 
+nodes (N)
+edges (2N)
+maxcost 100000
+seed (X)
+\end{verbatim}
+
+\item {\bf Random-Degree-8}.  Use {\tt random.c} with the commands
+below to generate random graphs with average degree 8
+(edges = avg\_degree*nodes/2).  
+\begin{verbatim} 
+nodes (N)
+edges (4N)
+maxcost 100000
+seed (X)
+\end{verbatim}
+
+\item {\bf Random-Degree-16}. 
+Use {\tt random.c} with the commands
+below to generate random graphs with average degree 16
+(edges = avg\_degree*nodes/2).  
+\begin{verbatim} 
+nodes (N)
+edges (8N)
+maxcost 100000
+seed (X)
+\end{verbatim}
+
+\item {\bf Triangle-1}.  Use {\bf t.f}.  This Fortran program
+generates a chain of triangles, producing many disjoint blossoms 
+in Edmond's algorithm.  The program accepts an integer $K$ 
+as input and generates a graph of $3K$ nodes formed
+by a sequence of one-connected triangles.  For problem size $N$, set
+$K = {\rm ceiling}(N/3)$.  
+
+\item {\bf Triangel-2}.  Use {\bf tt.f}.  This Fortran
+program generates a chain of $K$ three-connected triangles.  
+For problem size $N$, set $K = {\rm ceiling} (N/3)$. 
+
+\end{enumerate} 
+
+\section{How to Find Files and Programs.}
+
+The programs and instances described above, plus 
+much more, are available from {\tt dimacs.rutgers.edu} via 
+anonymous ftp or through the netlib server.   
+A compressed {\tt tar} file containing
+the entire directory structure (except the {\tt submit} subdirectory)
+is also available:  see {\tt pub/netflow/tar.notes}. 
+For more information send a note to {\tt netflow@dimacs.rutgers.edu}. 
+
+The problem instances are located in the subdirectory 
+{\tt pub/netflow/instances}.  The generators are located in the
+subdirectory {\tt pub/netflow/generators}.  Several problem-solving
+codes are available in the respective 
+directories {\tt pub/netflow/maxflow}, {\tt pub/netflow/mincost},
+and {\tt pub/netflow/matching}.  
+
+The table below gives path names for subdirectories containing
+files named in this document: all path names below should be prefixed by 
+{\tt pub/netflow}.   Several of the generators require a collection 
+of related files to operate; see the
+{\tt readme } file in each subdirectory for more information.
+
+\vspace{.5in}
+
+\begin{tabular}{ll} \hline
+ac.c    	& generators/network\\
+ac-max.p   	& generators/network/waissi \\
+assign.c        & generators/network \\ 
+capt.f 		& generators/network/capt \\
+dcube.c  	& generators/matching \\
+eight.problems  & generators/network/netgen \\
+genrmf.c        & generators/network/genrfm \\
+geomasn.a  	& generators/network \\
+ggraph.f 	& generators/network/gridgraph \\
+gte\_bad.*     & instances/mincost \\
+goto.c		& generators/network/grid-on-torus \\ 
+mesh1.c 	& generators/network/mesh \\ 
+netgen.c 	& generators/network/netgen \\
+random.c 	& generators/matching \\
+t.f 		& generators/matching \\
+tt.f 		& generators/matching \\
+twocost.a       & generators/network \\ 
+universal.c     & program\_tools  (or) \\
+                & generators  \\      
+washington.c    & generators/network/washington \\ \hline
+\end{tabular}
+
+\end{document}

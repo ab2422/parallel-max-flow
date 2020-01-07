@@ -1,0 +1,896 @@
+\documentstyle[11pt]{article}
+\setlength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.5in}
+\addtolength{\textwidth}{\evensidemargin}
+\addtolength{\textwidth}{\oddsidemargin}
+\setlength{\oddsidemargin}{.25in}
+\setlength{\evensidemargin}{.25in}
+\addtolength{\textwidth}{-1.0\oddsidemargin}
+\addtolength{\textwidth}{-1.0\evensidemargin}
+\begin{document}
+\setlength{\baselineskip}{14pt}
+
+\title{\Large The First DIMACS International \\
+Algorithm Implementation Challenge: \\ The Core Experiments}
+\author{}
+\date{{\small \today}}
+\maketitle
+
+\section{Introduction} 
+The final phase of the First DIMACS Implementation Challenge begins.
+Participants are invited to perform a set of ``core'' experiments
+described in this document and to report their results at the DIMACS
+Workshop to be held in October 1991.
+
+We expect that much more extensive and thorough experiments have been
+carried out during the Spring and Summer of 1991, and we encourage
+Challenge participants to investigate a variety of experimental
+problem areas.  The projects listed below should represent only a part
+of the total experimental study for each participant.  Indeed, there
+is {\em no requirement} that the core experiments be carried out at
+all; we request that participants do so in order to maximize the
+comparability of experimental results.  Participants are of course
+invited to extend or augment the set of core tasks as desired.
+
+\section{The Challenge Workshop} 
+
+DIMACS will sponsor a three-day workshop beginning October 15th 1991
+for Challenge participants to meet and discuss their experimental
+results.  The workshop will be organized into sessions, each centered
+around a particular problem class.  Each session will include: an
+introductory survey talk; presentations of experimental results by
+Challenge participants; and a panel discussion to evaluate the results
+and to discuss future goals.  Additional sessions will be scheduled
+for informal competition among the participants, using local Sun
+systems and/or remote facilities.
+
+The number of slots available for research presentations is limited.
+Participants are invited to submit 10-page extended abstracts
+describing the experimental study and the (perhaps preliminary)
+results, by August, 13th 1991.  Speaker slots will be awarded based
+upon evaluation of the abstracts.
+
+Each abstract should thoroughly describe the experimental methodology
+and research questions addressed in the project, discuss the most
+interesting experimental results so far, and sketch the problems to be
+addressed in the future.  It is not necessary that all planned
+experiments be completed by August 13th; a summary of partial or
+preliminary results is acceptable for the abstract as long as there is
+some indication that significant work has been done.
+
+Before the start of the workshop, all abstracts for a given session
+will be sent to session participants and to the presenter of the
+survey talk.  The abstracts, introductory surveys, transcripts of the
+panel discussions, and a directory of contributed programs available
+from DIMACS, will be collected and published as workshop proceedings.
+Best Paper awards will be presented based upon the quality of the
+experimental work and the significance of experimental results as
+presented in the abstracts.  In addition, workshop participants are
+invited to submit full papers for a refereed volume to be published at
+a later date.
+
+We expect to be able to provide at least partial travel and lodging
+support to all Challenge participants who need it; priority will be
+given to those invited to make presentations and to graduate students.
+Participants from other countries can receive support for lodging and
+for travel {\em within} the United States.
+
+Important Challenge and Workshop dates are listed below.
+
+\vspace{.2in} 
+
+\begin{tabular}{ll}\hline 
+August 13 & Workshop submission deadline for extended abstracts. \\
+August 31 & Announcement of session presenters and workshop schedule.
+\\ October 14-15-16 & DIMACS Challenge Workshop at Rutgers
+University.\\ January 15, 1992 & Submission deadline for full papers.
+\\ \hline
+\end{tabular}
+
+\section{The Experiments}
+
+This section describes the basic experiments to be carried out by
+Challenge participants.  Later sections describe problem-specific
+details and give further guidelines.  We begin with some general
+definitions and conventions for program testing.
+
+\begin{itemize} 
+\item Throughout this document, the {\bf problem size} refers to $n$, the 
+number of vertices in the network (or graph) for a given input class.
+
+\item The {\bf running time} is defined as the CPU time taken 
+by the program to find an to report a single integer solution (such as
+total flow cost or total matching weight) for a given input instance.
+
+The total solution time---including time to input and to output a full
+solution---is also of interest, but this should be a reported
+separately.  If the program accepts an input format that is different
+from the DIMACS format, it is not necessary to report the time
+required for translation.
+
+For implementations on parallel architectures, the {\bf parallel
+speedup} should also be reported: how does running time improve as the
+number of processors increases?
+
+\item Strive to produce a {\bf fair test} of each program being
+studied.  Any program can be fine-tuned to give improved performance
+for a restricted class of inputs; many programs have input parameters
+to allow users to make adjustments based upon {\em a priori} knowledge
+of input structure.  Is it more ``fair'' to compare implementations
+using untuned code or using the best-known strategy for each?
+
+This is of course a difficult question in general.  For the purposes
+of the DIMACS Challenge, any technique or strategy for tuning a
+program is acceptable in a fair test {\em as long as the use of that
+technique could (in theory) be automated.} That is, the implementor
+must able to write down the ``rules'' for applying the technique
+clearly enough that a decision routine (or a reader unfamiliar with
+program details) could replicate the strategy and produce identical
+test results based on easily-computed properties of the input
+instance.
+
+Note that some of the questions below may be more easily answered if
+program parameters are left unchanged throughout a run of experiments.
+
+\end{itemize} 
+
+\subsection{Experiments using Random Inputs} 
+
+The network generators and input families available from DIMACS are
+described later in the problem-specific sections.  Each {\em input
+family} corresponds to an input property that may have a significant
+effect on program performance.  Each family includes a small number of
+{\em input classes} which have specific parameter settings.  Read the
+guidelines and select {\em at least one input family} for testing in
+your home environment.
+
+It is expected that the following tasks will be performed for each
+input class and each program being tested.
+
+\paragraph{Designing the Experiment.} 
+\begin{enumerate} 
+\item  A particular input class together with a specific problem size
+represents a {\em sample point}.  Determine the number of random {\em
+trials} (each with a different random seed) that are required to
+obtain a good estimate of mean running time at each sample point.
+
+A simple evaluation procedure is outlined below; participants are
+welcome to apply more sophisticated analyses.
+\begin{enumerate}  %sample point 
+\item  For a given input class and a moderately large problem size, 
+set $t=10$.  Find the mean CPU time over $t$ random trials (each with
+a different random number seed).  Do this 4 times to obtain 4 means
+(using $4t$ independent trials).
+
+\item  If the 4 means vary from one another by less than 
+10 percent, then $t$ is probably adequate.  If there is large
+variation among the 4 values, then $t$ should be increased. In
+general, variance in the means is proportional to $1/t$.
+
+\item An alternative test is to compare 4 means at the given
+problem size to 4 means with the problem size doubled.  Find a $t$
+such that variation {\em between} the two sets of numbers is
+significantly larger than variation {\em within} each set.
+
+\item Iterate the above steps until a satisfactory value for 
+$t$ is found.
+\end{enumerate} %sample point 
+
+\item  Considering $t$ and properties of the input class 
+(such as network density), determine the largest problem size
+$n_{max}$ that can be tested.  Suggested lower bounds for the smallest
+problem size $n_{min}$ are given in the problem-specific sections.
+
+Choose $k$ values of $n$ within the range $n_{min} \ldots n_{max}$,
+where $k$ is between 4 and 10.  The values should be powers of 2: for
+example, $2^{10}, 2^{12}, \ldots 2^{20}$.  Fractional powers are also
+acceptable, rounded to the nearest integer when necessary.  For
+example $2^{10}=1024, 2^{10.5}=1448, 2^{11}=2048$.  (If $n_{max} \leq
+50 n_{min}$, choose values evenly spaced within their range.)
+\end{enumerate} 
+
+\paragraph{Testing the Programs and Reporting the Results.} 
+
+Some references which give guidelines for performing computational
+experiments, analyzing functional relationships and distributional
+properties, and reporting the results, are listed below.
+\begin{description}
+
+\item Box, Hunter, and Hunter, {\em Statistics for Experimenters,} 
+Wiley and Sons 1978.
+
+\item Chambers, Cleveland, Kleiner, and Tukey, {\em Graphical Methods
+for Data Analysis}, Wadsworth International Group/Duxbury Press,
+Boston, 1983.
+
+\item Crowder, Dembo, and Mulvey, ``Reporting computational experiments
+in Mathematical Programming,'' {\em Mathematical Programming} 15
+(1978), pp 316--329.
+
+\item H. Greenberg, ``Computational testing: why, how, and how much,''
+ORSA Journal of Computing 2 (1990), pp 94--97.
+
+\item J. Tukey, {\em Exploratory Data Analysis}, Addison-Wesley 1977. 
+
+\end{description} 
+
+The following topics should be addressed when reporting the results of
+the core experiments.
+\begin{enumerate} 
+\item  Measure program running time for each input class: this will 
+require $tk$ executions of each program.  Report the mean running time
+for each program at each sample point.
+
+Some generators will (with low probability) produce non-feasible
+inputs. If the program detects and reports an infeasible input, that
+trial should not be included in the tallying of average solution time:
+generate extra instances to obtain $t$ random trials.
+
+\item  Find a {\em functional} relationship between
+mean running time and problem size.  The easiest way to do this is to
+use a data-analysis package available on your local system.  Much can
+be done without sophisticated tools, however: some simple procedures
+which require minimal computational aids are listed below. Let $x$
+denote the problem size and let $y$ denote the mean running time.
+\begin{itemize}
+
+\item {\bf Growth Analysis.}  What happens to $y$ as $x$ doubles?  
+If $y$ doubles, then $y$ is growing linearly with $x$. If $y$
+quadruples each time, then $y$ is growing as the square of $x$.
+
+\item {\bf The Power Law.} 
+Take the (base-2) logarithm of both $x$ and $y$, and plot the
+transformed data.  If the points are approximately linear, find the
+slope, $m$, of a line through the points.  Growth in (the original)
+$y$ is proportional to $x^{m}$.  If the points are not linear, use
+this technique to find powers of $x$ which ``bracket'' growth in $y$.
+
+\item {\bf Checking Residuals.}  Guess a functional fit to the data, 
+say $y' = x \log x$.  Subtract each function value $y'$ from the
+observed value $y$ and plot the differences (the residuals) against
+$x$.  If the residuals are curving upwards, then the functional guess
+is too low: try again with (say) $y' = x (\log x)^2$.  If the
+residuals now form a line with slope $m$, try $y' = x (\log x)^2 +
+mx$.  Stop when the residuals are horizontal and near zero.
+
+\item See the references cited above for more advanced 
+methods for analyzing functional relationships in data.
+\end{itemize}
+
+\item  Identify the most important combinatorial quantities in 
+the implementation---the ones which are the best predictors of program
+running time.  Find a functional relationship between problem size and
+these combinatorial quantities.
+
+For our purposes, a ``combinatorial quantity'' is any component of the
+program that can be counted: calls to procedures, main loop
+iterations, number of heap-insertions, number of preflow-pushes, et
+cetera.
+
+Finding the desired functional relationship may be quite difficult.
+At the very least, characterize which program elements tend to
+dominate the running time as problem size increases.  For example, is
+the running time dominated by data-structure updates?  For parallel
+implementations, is there a communication bottleneck that becomes
+increasingly significant?  Suppose Procedure X tends to dominate the
+running time as $n$ grows: is this because the number of procedure
+calls increases, because the time spent in each call increases, or a
+combination of both?
+
+\item  Select at least 2 sample points 
+from among the total set (perhaps a large and a medium-sized problem)
+for detailed study of factors other than the mean.  For each sample
+point, describe the range and distribution of running times.
+
+For example, what are the worst and best running times, the median
+running time, and the quartiles?  (The median splits the data in half;
+the quartiles split each half in half.)  Are the times symmetric
+around their mean, or do points trail off toward the high end?  Is the
+data bimodal?  Do outliers (unusually large or small running times)
+appear?  What input properties are associated with unusually large
+running times?
+
+\end{enumerate} %reporting 
+
+\subsection{A Machine Calibration Experiment.}
+
+A directory containing programs, input instances, and instructions for
+their use, is available from DIMACS through anonymous ftp (or from a
+netlib server---See the Challenge General Information document for
+instructions on obtaining files from DIMACS). The pathname of the
+directory is {\bf pub/netflow/benchmarks}.
+
+Compile and run the programs them in your local environment(s) using
+the input instances provided.
+
+\begin{enumerate}
+\item  Report the {\em total} running time---from input to 
+output---required on your local system to run each program using each
+input instance.
+
+\item  How much variation in running time can you observe 
+across runs with identical input instances?
+
+For example, how much does reported running time vary in subsequent
+runs using the same inputs?  How much does running time depend upon
+the time of day or the number of users on the system?  How much
+variation can be observed from changes in factors such as compiler
+version or optimization level?
+\end{enumerate} 
+
+The results of this test will be collected for a comparative study of
+the diverse programming environments used by Challenge participants
+and of sources of variation in runtime experiments.
+
+\subsection{Tests On Real Problems.}
+
+Time will be allocated at the workshop for informal competitions in
+which participants will solve problem instances from real
+applications.  Workshop participants should plan to bring along their
+hardest instances and their fastest codes for testing on DIMACS
+machines (Sun SPARCstations---those with Telnet capabilities can run
+their tests remotely).
+
+One component of this competition will be to assess how useful
+randomly-generated input classes are in predicting program performance
+on real instances.
+
+\section{How to Find Files and Programs.} 
+
+Random instance generators and related programs are available from
+{\bf dimacs.rutgers.edu} via anonymous ftp or through the netlib
+server.  (See the General Information document for further information
+on obtaining files from DIMACS.)  They are located in the directory
+{\bf pub/netflow/generators},
+
+Some of the generators require a collection of related files to
+operate; look at the {\bf readme} file in each subdirectory for
+further documentation and instructions on using the programs.
+
+\subsection{System Compatibility}
+
+The programs listed in this document are all executable on SUN Unix
+systems.  The Pascal programs provided by Gary Waissi are also
+available in Turbo versions.  
+
+It may be necessary to make small modifications to achieve
+compilability on other systems.  In particular, the calls to system
+random number generators will probably need to be replaced with
+locally-compatible system calls.  Some participants may prefer to use
+{\bf universal.c}, which contains a stand-alone random
+generator that produces integers uniformly distributed within the
+range $[0, 10^9]$.  This generator has the remarkable property of
+being completely portable: for a given seed it will produce an
+identical sequence of integers on any architecture that can represent
+30-bit integers, regardless of the internal integer representation,
+maximum word size, or other machine-dependent factors.
+
+\subsection{The Instance Generators}
+
+The generators and related programs named in this document are listed
+below along with the path names of their home directories.
+
+Note that more generators are available than are mentioned here, and
+that some of the named generators have more options than are
+described.  The file {\bf pub/netflow/recursive.ls} contains a
+recursive listing, updated weekly, of all directories pertaining to
+the DIMACS Challenge.  See the {\bf readme} file in a particular
+subdirectory for further documentation.
+
+\begin{tabular}{ll} \hline 
+ac-max.p & pub/netflow/generators/network/waissi \\ asnmat.a &
+pub/netflow/generators/matching \\ asnmin.a & pub/netflow/generators
+\\ assign.c & pub/netflow/generators \\ dcube.c &
+pub/netflow/generators/matching \\ fractals.c &
+pub/netflow/generators/matching/fractals \\ genrmf.c &
+pub/netflow/generators/network/genrmf \\ maxmin.a &
+pub/netflow/generators \\ mesh.c & pub/netflow/generators/network/mesh
+\\ neighbor.c & pub/netflow/generators/matching \\ netgen.c &
+pub/netflow/generators/netgen \\ netgen.f &
+pub/netflow/generators/netgen/fortran \\ ra-max.p &
+pub/netflow/generators/network/waissi \\ random.c &
+pub/netflow/generators/matching \\ tr2-max.p &
+pub/netflow/generators/network/waissi \\ universal.c &
+pub/netflow/generators \\ washington.c &
+pub/netflow/generators/network/washington \\ \hline
+\end{tabular} 
+
+\section{Maximum Flows}
+
+Input instances for maximum flow algorithms run on on sequential
+architectures should have at least $n_{min} = 256 = 2^{8} $ vertices.
+On parallel architectures the instances should have at least $n_{min}
+= 1024 = 2^{10}$ vertices.
+
+\subsection{The Network-Width Family.}
+
+Each network in this family has a ``length'' parameter which
+corresponds roughly to the length of paths from the source to the
+sink, and a ``width'' parameter which corresponds to the number of
+paths across a cut separating the source from the sink.  The input
+classes represent a range of length/width ratios.  Other factors such
+as network structure, density, and capacity ranges remain fixed.  Four
+input classes for this family are defined; two are wide and two
+are long.  
+
+\paragraph{ } 
+
+Use {\bf washington.c} with {\bf function}$=2$ to obtain a Random
+Leveled Graph.  This network has vertices arranged in {\bf arg1} rows
+and {\bf arg2} columns.  Each vertex in column $i$ has exactly three
+arcs to randomly-chosen vertices in the next column.  Set the maximum
+arc capacity to {\bf arg3}$=10^4$.
+
+Networks generated by {\bf genrmf.c} have vertices in {\bf b}
+grid-like frames, each of size {\bf a}$\times${\bf a}.  The source
+node is in a corner of the first frame, and the sink node is in a
+corner of the last frame.  Each vertex is connected to its grid
+neighbors within the frame, and to one vertex randomly chosen from the
+next frame.  There are about $6n$ arcs in the network. 
+Arc capacities within a frame are {\bf c2}$\times${\bf
+a}$\times${\bf a}.  Capacities for arcs between frames are chosen
+uniformly from the range [{\bf c1}, {\bf c2}]. Set {\bf c1}$=1$ and
+{\bf c2}$=10^4$.  
+
+\begin{itemize}   
+\item {\bf Washington-RLG-Wide}. 
+To generate a wide network with $n = 2^x$ vertices, set {\bf
+arg1}$=2^{x-6}$ and {\bf arg2}$=64$.  For these networks, width grows
+with problem size and length is fixed at 64.
+
+\item {\bf Washington-RLG-Long.}  To generate a long network with $n=2^x$ 
+vertices, set {\bf arg1}$=64$ and {\bf arg2}$=2^{x-6}$.  Here width is
+fixed at 64 and length grows with problem size.
+
+\item {\bf Genrmf-Long.} 
+To produce a network with $n= 2^{x}$ vertices, let $y = x/4$, and set
+{\bf a} $= 2^{y}$ and {\bf b}$ = 2^{2y}$.  These networks are twice as
+long as they are wide.
+
+\item {\bf Genrmf-Wide.}  To produce a network with $n=2^x$ vertices, 
+let $y = x/5$, and set {\bf a}$ = 2^{2y}$ and {\bf b}$ = 2^{y}$.
+These networks are twice as wide as they are long.
+\end{itemize} 
+
+\subsection{The Network Density Family} 
+
+The networks in this family represent variations in network density.
+There are 5 input classes: two are sparse, two are moderately dense,
+and one is very dense.  All of these networks are acyclic.
+
+\paragraph{ } 
+Use {\bf washington.c} with {\bf function}$=5$ to generate a Square
+Mesh.  Vertices in this network form a square grid with {\bf arg1}
+vertices on a side.  To generate a network with $n=2^x$ vertices, set
+{\bf arg1}$=2^{x/2}$.  Each 
+vertex has {\bf arg2} arcs to (fixed, not random) vertices in the next
+column.  The maximum arc capacity is determined by {\bf arg3}: set
+{\bf arg3}$=10^6$.
+
+Use {\bf washington.c} with {\bf function}$=6$ to generate a Basic
+Line Network.  Vertices are numbered 1 through ({\bf arg1}$\times${\bf
+arg2}).  The vertex degree is specified by {\bf arg3}.  Each vertex
+$i$ has arcs to vertices chosen randomly from the range $[i+1, i+({\bf
+arg2}\cdot {\bf arg3})]$.  Maximum arc capacity is set internally at
+$10^6$.
+
+Use {\bf ac-max.p} generate a dense acyclic network.  This
+network is similar to Washington-Line, but the generator is much more
+efficient for dense networks.  Vertex $i$ has an arc to every vertex
+numbered $i+1$ through $n$.
+
+\begin{itemize} 
+\item {\bf Washington-Square-Sparse.} 
+Set {\bf arg2}$=4$.  Every vertex has arcs to 4 vertices in the next
+column.
+
+\item{\bf Washington-Square-Moderate.} To generate a moderately-dense 
+network set {\bf arg2}$ equal to ${\bf arg1/4}.  Each vertex in 
+column $i$ has $\sqrt{n}/4$ arcs to vertices in column $i+1$.
+
+\item {\bf Washington-Line-Sparse.}  To generate a problem of size
+$n = 2^x$, set {\bf arg1}$=2^{x-2}$ and {\bf arg2}$=4$.  Set {\bf
+arg3}$=4$.  Every vertex $i$ has 4 arcs to vertices chosen randomly
+from $[i+1, i+16]$.
+
+\item {\bf Washington-Line-Moderate.}  To generate a problem of
+size $n = 2^x$, set {\bf arg1}$=2^{x-2}$ and {\bf arg2}=$4$.  Set {\bf
+arg3}$=2^{(x/2) - 2} = \sqrt{n}/4$.  Every vertex has $\sqrt{n}/4$
+arcs to vertices chosen randomly from $[i+1, i+\sqrt{n}]$.
+
+\item {\bf Acyclic-Dense.}  
+Use {\bf ac-max.p} with the options Fully Dense (type {\bf f} at the
+prompt) and Random Capacities (type {\bf n} when asked about special
+capacities).  Set the maximum capacity to $10^6$.
+\end{itemize}
+ 
+\subsection{The Capacity-Scale Family.} 
+ 
+Networks in this family represent variations in the maximum number of
+bits required to specify capacity.  Four input classes are given: two
+use a small number of bits and two use a large number of bits.
+
+\paragraph{ }
+
+Use generator {\bf tr2-max.p} to produce networks with vertices in a
+square grid (with an extra partial column if $n$ is not a square
+number).  Every vertex has an arc to its grid neighbors. 
+
+Use {\bf washington.c} with {\bf function}$=3$ to generate a Random
+2-Leveled Graph.  Vertices in this graph are arranged in a grid with
+{\bf arg1} rows and {\bf arg2} columns.  Each vertex in column $i$ has
+exactly three arcs to vertices chosen randomly from columns $i+1$ and
+$i+2$.  To generate a problem of size $n=2^{x}$, take $y=x/2$ and set
+{\bf arg1}$= 2^y$ and {\bf arg2}$=2^y$.
+
+\begin{itemize} 
+\item {\bf Transit2-Lo-Cap}.  At the prompt, set the maximum
+capacity to 100.
+
+\item {\bf Transit2-Hi-Cap}. At the prompt, set the maximum 
+capacity to $10^8$.
+
+\item {\bf Washington-RLG2-Lo-Cap}. Set the maximum arc 
+capacity {\bf arg3} to 100.
+
+\item {\bf Washington-RLG2-Hi-Cap}. Set the maximum arc capacity 
+{\bf arg3} to $10^8$.
+\end{itemize} 
+
+\section{The Assignment Problem}
+
+This section describes input families for programs which solve the
+assignment problem.  For implementations on sequential machines, the
+smallest problem size tested should be at least $n_{min} = 2^8 = 256$.
+For parallel machines, the smallest problem size should be at least
+$n_{min} = 1024 = 2^{10}$.
+
+\paragraph{ } 
+All of the input families use the same instance generator, {\bf
+assign.c}, to generate bipartite networks for the assignment problem.
+The following command keywords are accepted on standard input.
+
+\vspace{.2in} 
+\begin{tabular}{ll} \hline
+{\bf nodes x} & Specifies x nodes in the network. \\ {\bf sources x} &
+Specifies that y of the nodes are supply nodes. \\ {\bf maxcost x} &
+Upper bound on arc costs (uniformly distributed). \\ {\bf complete} &
+Specifies a complete bipartite graph with an arc from \\ & each supply
+node to each demand node. \\ {\bf degree x} & Node degree for each
+supply node (can't be used together \\ & with {\bf complete}). \\ {\bf
+seed x} & (optional) Gives a random number seed. \\ \hline
+\end{tabular} 
+
+\subsection{The Supply/Demand Ratio Family} 
+
+Networks in this family vary in the ratio of the number of supply
+nodes to the number of demand nodes in the network.  The vertex degree
+is held constant across the range of input classes.  For each instance
+class below set {\bf maxcost}$=10^5$ and {\bf degree}$=n/16$.
+
+\begin{itemize}
+\item {\bf Assign-Lo-Supply.}  For a network with $n$ vertices, 
+set {\bf sources}$=n/8$.
+
+\item {\bf Assign-Eq-Supply.} For a network with $n$ vertices let 
+{\bf sources}$=n/2$.
+
+\item {\bf Assign-Hi-Supply.}  For a network with $n$ vertices,
+set {\bf sources}$=7n/8$.
+
+\end{itemize} 
+
+\subsection{The Cost Scale Family.}
+
+Networks in this family vary in the number of bits required to specify
+maximum arc cost.  To generate a network of $n$ vertices, set {\bf
+sources}$=n/2$ and {\bf degree}$=n/4$.
+
+\begin{itemize}
+\item {\bf Assign-Lo-Cost.} Set {\bf maxcost}$=10^2$
+
+\item {\bf Assign-Med-Cost.} Set {\bf maxcost}$=10^5$.
+
+\item {\bf Assign-Hi-Cost.}  Set {\bf maxcost}$=10^8$. 
+\end{itemize} 
+
+\subsection{The Density Family.}
+Networks in this family vary in the vertex degree of the supply
+vertices.  For a network with $n$ vertices, let {\bf sources}$ = n/2$
+and let {\bf maxcost}$=10^5$.
+
+\begin{itemize} 
+\item {\bf Assign-Lo-Degree}  Set {\bf degree}$=8$.  This network 
+contains $4n$ arcs.
+
+\item {\bf Assign-Med-Degree.}  Set {\bf degree}$= \log_2 n$.  This network 
+contains $(n \log_2 n) /2$ arcs.
+
+\item {\bf Assign-Hi-Degree.}  Set {\bf degree}$=n/8$.  This network
+contains $(n^2/16)$ arcs.
+
+\item {\bf Assign-Xhi-Degree.}  Do not use the {\bf degree} command. Instead,
+use {\bf complete} to generate a network with all $n^2/4$ arcs
+present.
+
+\end{itemize} 
+
+\section{Minimum Cost Flows}
+
+This section describes problem families for testing minimum
+cost flow programs.
+
+Implementations on sequential machines should solve problems of size
+at least $n_{min} = 128 = 2^{7}$.  Implementations for parallel
+architectures should have $n_{min}= 1024 = 2^{10}$.
+
+\subsection{Maximum Flow Problems.}
+
+The input families defined for maximum flow problems can be used to
+study variations in network {\bf depth}, {\bf density}, and {\bf
+capacity-scale} for minimum cost flows.
+
+Use the awk program {\bf maxmin.a} to convert instances in the maximum
+flow format to instances in the minimum cost flow format.  Note that
+the maximum flow problems are converted into circulation problems: all
+nodes are transhipment nodes with demands equal to zero.
+
+\subsection{Assignment Problems.} 
+
+The input families defined for assignment problems can be used to
+study variations in {\bf cost scale} and {\bf vertex degree}.  Use the
+awk  program {\bf asnmin.a} to convert instances in the
+assignment format to instances in the minimum-cost flow format.  Note
+that the conversion program assigns {\bf supply}$=1$ to all source
+nodes in the bipartite network, and {\bf demand}$=-1$ to all sink
+nodes.  Therefore total-supply will equal total-demand (implying the
+existence of a feasible solution) only for networks where {\bf
+sources} = {\bf nodes}$/2$.
+
+\subsection{NETGEN}
+DIMACS has available two versions of the well-known NETGEN Generator.
+The file {\bf netgen.f} contains a NETGEN program written in Fortran;
+input and output files must be in standard NETGEN format.
+
+The file {\bf netgen.c} contains a C-language version of NETGEN.  This
+program has compiler switches to provide a standard Fortran subroutine
+interface (allowing the code to be called from Fortran programs),
+to generate output instances compatible with the DIMACS format, and
+to provide a program trace for debugging purposes.
+
+The NETGEN generator accepts a sequence of 15 integers interpreted as
+follows.
+\vspace{.2in}
+
+\begin{tabular}{rll} \hline 
+1 & {\bf seed} & Random number seed (a large integer). \\ 2 & {\bf
+problem} & Problem number (for output documentation.) \\ 3 & {\bf
+nodes} & Number of nodes. \\ 4 & {\bf sources} & Number of sinks
+(including transshipment). \\ 5 & {\bf sinks} & Number of sinks
+(including transshipment). \\ 6 & {\bf density} & Number of
+(requested) arcs. \\ 7 & {\bf mincost} & Minimum arc cost. \\ 8 & {\bf
+maxcost} & Maximum arc cost. \\ 9 & {\bf supply} & Total supply. \\ 10
+& {\bf tsources} & Transhipment sources. \\ 11 & {\bf tsinks } &
+Transshipment sinks. \\ 12 & {\bf hicost } & Percent of skeleton arcs
+given max cost. \\ 13 & {\bf capacitated} & Percent of arcs to be
+capacitated. \\ 14 & {\bf mincap} & Minimum capacity of capacitated
+arcs. \\ 15 & {\bf maxcap} & Maximum capacity of capacitated arcs. \\
+\hline
+\end{tabular} 
+
+\subsection{The Supply/Demand Ratio Family.}
+
+Networks in this family may be used to study the effect of changing
+the ratio of supply nodes to demand nodes.  Use {\bf netgen.c} with
+the values for parameters 1 through 15 as given below.  The notation
+$X$ means ``your choice.''
+
+\vspace{.2in} 
+\begin{tabular}{|l|rrrrr|} \hline
+1---5 & X & X & $n$ & (sources) & (sinks) \\ 
+6---10 & $8n$ & 1 & 1000 & $10^5$ & 0 \\ 
+11---15 & 0 & 0 & 0 & 0 & 0 \\ \hline
+\end{tabular}
+
+\begin{itemize}
+\item {\bf NETGEN-Lo-Lo.}  Let {\bf sources}$=n/8$ and let 
+{\bf sinks}$=n/8$.
+
+\item {\bf NETGEN-Lo-Hi.}  Let {\bf sources}$=n/8$ and let 
+{\bf sinks}$=n/2$.
+
+\item {\bf NETGEN-Hi-Lo.}  Let {\bf sources}$=n/2$ and let
+{\bf sinks}$=n/8$.
+
+\item {\bf NETGEN-Hi-Hi.} Let {\bf sources}$=n/2$ and let 
+{\bf sinks}$=n/2$.
+\end{itemize}
+
+\subsection{The Total-Supply Family.}
+
+Networks in this family can be used to assess the effect of the total
+network supply on program running time.  These are uncapacitated
+transportation problems.  Use {\bf netgen.c} with the following 15
+parameter settings to generate a network with $n$ nodes.  The notation
+$X$ means ``your choice.''
+
+\vspace{.2in} 
+\begin{tabular}{|l|rrrrr|} \hline
+1---5 & X & X & $n$ & $n/2$ & $n/2$ \\ 
+6---10 & $8n $ & 1 & 1000 & (supply) & 0 \\ 
+11---15 & 0 & 0 & 0 & 0 & 0 \\ \hline
+\end{tabular}
+
+\begin{itemize}
+\item{\bf Netgen-Lo-Supply.}  Let {\bf supply}$= 100$. 
+\item {\bf Netgen-Med-Supply.} Let {\bf supply}$= 10^5$. 
+\item {\bf Netgen-Hi-Supply.} Let {\bf supply}$= 10^8$.  
+\end{itemize} 
+
+\section{Geometric Matching Problems.}
+
+This section describes input families for matching programs which take
+geometric input instances.  For sequential implementations the minimum
+problem size should be $n_{min} = 128 = 2^7$.  For parallel implementations
+the minimum problem size should be $n_{min} = 512 = 2^9$.  
+
+\subsection{The Dimension Family}
+The graphs in this family vary in the number of 
+dimensions containing the point space.
+
+\paragraph{ } 
+Use the {\bf dcube.c} generator to produce $n$ points distributed
+uniformly in a d-dimensional cube.  For this input family let the
+maximum point coordinate value be {\bf maxloc}$=10^6$.
+
+\begin{itemize}
+\item {\bf Geom-Lo-D.}  Set {\bf dimension}$=2$.
+\item {\bf Geom-Med-D.}  Set {\bf dimension}$=4$.
+\item {\bf Geom-Hi-D.}  Set {\bf dimension}$=8$. 
+\end{itemize} 
+
+\subsection{The Locality Family} 
+
+Graphs in this family vary in the degree of ``locality'' 
+in the graph.  Use the {\bf fractals.c} generator 
+with the input files named below. 
+This generator produces images which are ``recursively self-similar.''
+
+\begin{itemize}
+\item { \bf Geom-Lo-Locality.}  Use the input file {\bf box1.in} 
+
+\item { \bf Geom-Med-Locality.} Use the input file {\bf box2.in}
+
+\item {\bf Geom-Hi-Locality.}  Use the input file {\bf box3.in} 
+\end{itemize} 
+
+\section{Graphs in Edge-List Format.}
+
+This section gives input families for weighted matching problems which
+are presented in the edge-list format.  Most of these graphs are suitable
+for testing either weighted or unweighted problems; some exceptions 
+are noted below. 
+
+\subsection{Assignment Problems.}
+
+The assignment problem is a maximum weighted matching problem defined
+for bipartite graphs.  The input families defined earlier for
+assignment problems can be used study performance of general matching
+algorithms with respect to variations in {\bf graph density}, the 
+{\bf size of the bipartite partition}, and the {\bf number of bits} 
+needed to specify edge costs.  (The last one is
+not suitable for studying unweighted matching algorithms.) 
+Use the awk program {\bf asnmat.a} to convert instances in {\bf .asn}
+format to instances in {\bf .edge} format.
+
+\subsection{Generators for Matching Problems.} 
+
+Use the generation program {\bf random.c} to produce a random graph of
+$n$ nodes and $m$ edges.  Edges are drawn randomly without
+replacement from the set of $n(n-1)/2$ possible edges.  Edge costs are
+uniform and have a specified maximum value.  
+
+The program {\bf neighbor.c} accepts a graph in {\bf .geom} format on
+standard input, plus a command-line argument {\bf k}.  It produces a
+graph in {\bf .edge} format having approximately $kn$ edges.  Vertex
+$i$ has an edge to vertices $[i-k, i-1]$ (with fewer edges for the
+extremal vertices).   The edge cost for a pair of connected
+vertices corresponds to their distance in the geometric graph,
+computed according to the $L_1$ (Manhattan) norm.
+
+Equivalently, if Manhattan distances in the original geometric graph
+are represented as the lower diagonal of a matrix, the parameter {\bf
+k} specifies edges from {\bf k} rows adjacent to the main
+diagonal.  Setting {\bf k}$=${\bf n} will produce a complete graph in
+edge-list format.  Note that graph structure is fixed for a given $n$
+and $k$: for cardinality-matching algorithms it is not necessary 
+to run several ``random'' trials at each problem size.  
+
+\subsection{A Graph Density Family.}
+
+This family represents a range of graph densities for two 
+types of graphs.  For the first
+two, use {\bf random.c} with the following default settings. 
+
+\begin{tabular}{ll}
+{\bf nodes} & $n$ 
+\\ {\bf edges} & (see below) 
+\\ {\bf maxcost} &
+100000 \\
+\end{tabular} 
+
+\vspace{.2in} 
+The generation program {\bf dcube.c} (described in the previous 
+section) generates a graph in the {\bf .geom} format. 
+Use the following commands to generate geometric
+graphs of $n$ nodes.
+
+\begin{tabular}{ll}
+{\bf nodes } & n \\ 
+{\bf dimension} & 2 \\ 
+{\bf maxloc} & $10^5$ \\
+\end{tabular} 
+
+Convert the output of {\bf dcube.c}  to {\bf .edge} format 
+using {\bf neighbors.c} with the settings listed below. 
+Note that for unweighted matching problems the two Hi-Density graphs are
+identical. 
+
+\begin{itemize}
+\item {\bf Random-Lo-Density.} Use {\bf random.c} with 
+{\bf edges}$= 2n \log_2 n$.
+
+\item {\bf Random-Hi-Density.} Use {\bf random.c} with
+{\bf edges}$=n(n-1)/2$.  This will give a complete graph with uniform
+edge costs.
+
+\item {\bf Man-Lo-Density.} Use {\bf dcube.c} and
+{\bf neighbor.c} with {\bf k}$= 2 \log_2 n$.
+
+\item {\bf Man-Hi-Density.} Use {\bf dcube.c} and
+{\bf neighbor.c} with {\bf k}$=n$. This will give a complete graph
+with edge weights induced by the Manhattan metric on random points.
+
+\end{itemize} 
+
+\subsection{The Cost-Scaling Family.} 
+
+This family of graphs varies in the number of bits required to specify
+the edge costs.  This family would not give an interesting test of
+cardinality-matching problems.  Use {\bf random.c} with {\bf edges}$=2
+n \log_2 n$ for these input classes.
+
+\begin{itemize}
+\item {\bf Random-Lo-Cost.} Set {\bf maxcost}=$10^2$. 
+
+\item {\bf Random-Med-Cost.} Set {\bf maxcost}$=10^5$. 
+
+\item {\bf Random-Hi-Cost.} Set {\bf maxcost}$=10^8$. 
+
+\end{itemize} 
+
+\subsection{A Hard Cardinality Problem.} 
+
+The program {\bf hardcard.f} generates fixed (not random) instances
+which are worst-case for Edmond's cardinality matching algorithm.
+Note that instances can be used for unweighted or 
+weighted matching problems (edge costs are set to 1).  
+
+\begin{itemize}
+
+\item {\bf Card-Hard.}  To generate a problem with approximately 
+$n=2^x$ vertices, set $k = n/6$ (rounded to the nearest integer)
+in the program PARAMETER statement.  This graph will have $6k$
+vertices and $8k^2$ (about $2n^2 / 9$) edges.  All edge costs are set to 1.
+
+\item {\bf Card-Random.} Use {\bf random.c} with {\bf edges}$=n^2/4$. 
+Set {\bf maxcost}$=10$. 
+
+\item {\bf Card-Neighbors.}  Use {\bf dcube.c} with {\bf dimension}$=8$
+and {\bf maxloc} = $10$.  To obtain a graph in {\bf .edge} format,
+use {\bf neighbor.c } with command line value $n/4$.  
+
+\end{itemize} 
+
+\end{document}
+

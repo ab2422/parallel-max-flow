@@ -1,0 +1,60 @@
+The following input description is from Helgasen and Kennington's User
+Manual. NETFLO.INP contains an example input instance. 
+
+   There are four sets of information that are specified in the input: the
+number of nodes for the problem; the non-zero requirements at nodes; the
+number of arcs incident to each node; the arc name, from node, to node, 
+cost, upper bound and lower bound for each arc.
+
+   Since NETFLO is an all-integer code, the input is all integer.  The input
+format used for all data is 8I10.  That is, eight fields for 10-digit 
+integers.  The only type of data which requires all eight fields is the 
+specification of the number of arcs incident to each node.
+  
+   The input consists of:
+
+(1) The number of nodes.  The number of nodes in the problem is the first
+     data item.  It is given on the first field of the first line of data. 
+
+(2) The non-zero requirements at nodes.  It is only necesary to specify the
+    requirements for nodes which have non-zero requirements.  For each node,
+    one line of data is used to specify the node number and the requirement.
+    In NETFLO, supply at a node is assumed to be a positive requirement and 
+    demand at a node is assumed to be a negative requirement. To indicate the
+    end of specification of requirements, a blank line is used.
+
+(3) The number of arcs incident to each node.  This data is used to reserve
+    locations in the arc-length arrays for arcs to each of the nodes 
+    1,2,...n.  If there are 85 nodes in a problem, then 11 lines of data are
+    required.  The first 10 lines have all eight fields occupied and line 11 
+    of this type has only five field occupied.
+
+(4) Arc data: arc name, from-node, to-node, cost, upper bound and lower bound.
+    For each arc, one line provides the six items of data. The arc name is an
+    integer.  In this version, if the upper bound on an arc is 0 or blank, 
+    then NETFLO interprets the arc to be unbounded.  If the input value of
+    the upper bound is -1, then NETFLO interprets the arc to have an upper 
+    bound of 0.  The last line of this set of data must be a blank line.
+
+    The preferred manner of arranging the arc data is to have all arcs incident
+to node 1 appear first, then all arcs incident to node 2, ..., and finally all
+arcs incident to node n.  This manner of arranging the arcs is referred to as
+backward star format. Of course, there may be no arcs incident to some of the
+nodes.  Even if the arc data is not in backward star and even if the number of 
+arcs incident to each node is incorrectly specified in the third set of input
+data, NETFLO recovers from the error and makes the necessary changes.  
+Naturally, the changes require additonal processing to reorder the arcs as
+required by the program.  
+
+
+To convert input files from DIMACS min format to NETFLO format:
+--------------------------------------------------------------
+		Use the Unix shell program min_to_flo.
+
+		Usage: min_to_flo input.min NETFLO.INP
+	
+		(This program needs two other awk-source files:
+				trans.a format.a)
+
+ 
+

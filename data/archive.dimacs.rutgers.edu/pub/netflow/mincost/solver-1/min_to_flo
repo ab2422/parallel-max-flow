@@ -1,0 +1,8 @@
+
+
+case $# in
+0|1)	echo "Usage: min_to_flo input.min NETFLO.INP"; exit 1
+esac
+
+
+awk -f trans.a <$1 | sort +0 -1  | awk -f format.a >$2

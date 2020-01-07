@@ -1,0 +1,35 @@
+This directory contains bibliographic references to problems
+on network flows and matching.  
+
+netflow.bib:  A file containing Veldhorst's ``Bibliography on network
+   flow problems,'' as published in Algorithms Review.  Certain 
+   copywrite restrictions apply--see the file header.  This file is
+   in the Latex .bib format. 
+
+biblio.tex: This is a simple .tex file for getting a formatted bibliography
+   from netflow.bib.
+   The way to compile:
+		latex biblio
+		bibtex biblio
+		latex biblio
+		latex biblio
+   Finally there is a biblio.dvi file with the bibliography.
+		
+For other surveys and large  bibliographies, see also:
+
+R. K. Ahuja, T. L. Magnanti, and J. B. Orlin, ``Network Flows,''  
+   Sloan Working Paper No. 2059-88, August 1988, Sloan School 
+   of Management,  MIT.  For a copy of the biblography list 
+   only, (hard copy only), send a request to netflow@dimacs.rutgers.edu
+
+A. V. Goldberg, E. Tardos, and R. E. Tarjan,  ``Network Flow Algorithms,''
+   Technical Report CS-TR-216-89, March  1989, Dept. of Computer 
+   Science,  Princeton University, Princeton, NJ  07974
+
+M. Veldhorst, A bibliography on network flow problems, Algorithms
+   Review (the newsletter of Project ALCOM). Address:  ALCOM,
+   Department of Computer Science, Utrecht University,  P.O. Box 80.089
+   35008  TB Utrecht, the Netherlands.  
+
+
+
