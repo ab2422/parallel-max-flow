@@ -4,11 +4,24 @@
 #include <fstream>
 #include <stdio.h>
 #include <mpi.h>
+#include <unistd.h>
 #include <vector>
 #include "mpi-pr.h"
 using namespace std;
 
+#define max(a,b) ( ((a)>(b)) ? (a) : (b) )
+#define min(a,b) ( ((a)<(b)) ? (a) : (b) )
 
+static void wait_for_debugger(){
+    volatile int i = 0;
+    char hostname[256];
+    gethostname(hostname, sizeof(hostname));
+    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+    fflush(stdout);
+    while (0 == i){}
+
+    MPI_Barrier(MPI_COMM_WORLD);
+}
 
 /*
 Parses a file filename provided in DIMACS netflow format. 
@@ -32,7 +45,8 @@ network parse(string filename, int rank, int size){
     int v,w,cap,f,jv,jw;
     int rbuf[1]; // v,w,c(v,w), pos
     int sbuf[1]; // v,w,c(v,w), pos
-    MPI_Request sreq, rreq;
+    MPI_Request sreq = MPI_REQUEST_NULL;
+    MPI_Request rreq = MPI_REQUEST_NULL;
     MPI_Status sstat, rstat;
     bool ready = 1;
     if (file.is_open()) {
@@ -44,6 +58,7 @@ network parse(string filename, int rank, int size){
                     i=6;
                     net.n = atoi( &(line[6]));
                     npp = (net.n + size-1  )/size;
+                    net.npp = min(npp, max(0,net.n-rank*npp));
                     while (isspace(line[i])){
                         i++;
                     }
@@ -51,10 +66,10 @@ network parse(string filename, int rank, int size){
                         i++;
                     }
                     net.m = atoi(&(line[i]));
-                    net.odeg = (int*) malloc((npp)*sizeof(int));
-                    net.ideg = (int*) malloc((npp)*sizeof(int));
-                    net.adj = vector<vector<int>>(npp);
-                    net.badj = vector<vector<int>>(npp);
+                    net.odeg = (int*) malloc((net.npp)*sizeof(int));
+                    net.ideg = (int*) malloc((net.npp)*sizeof(int));
+                    net.adj = vector<vector<int>>(net.npp);
+                    net.badj = vector<vector<int>>(net.npp);
                     for (int j=0; j<net.n; j++){
                         net.adj[j].reserve(4*net.m/(size*net.n)+1);
                         net.badj[j].reserve(4*net.m/(size*net.n)+1);
@@ -93,7 +108,7 @@ network parse(string filename, int rank, int size){
                     i++;
                 }
                 w = atoi(&(line[i]))-1;
-                i++; // now i points to start of next number
+                i++; // now i points to (ws prior to) start of next number
                 while (isspace(line[i])){
                     i++;
                 }
@@ -102,6 +117,7 @@ network parse(string filename, int rank, int size){
                 }
                 cap = atoi(&(line[i]));
                 win = (( (rank*npp<=w) && (w < (rank+1)*npp) ));
+                // if vin: 
                 if (((rank*npp)<=v) && (v < (rank+1)*npp)){
                     net.odeg[v-rank*npp]++;
                     jv = net.adj[v-rank*npp].size();
@@ -143,9 +159,9 @@ network parse(string filename, int rank, int size){
         }
         file.close();
     }
-    for (int j=0; j< (net.n); j++){ //TODO FIX BOUNDS !!!!
-        (net.adj[j]).shrink_to_fit();
-    }
+    //for (int j=0; j< (net.n); j++){ //TODO FIX BOUNDS !!!!
+    //    (net.adj[j]).shrink_to_fit();
+    //}
     
     return net;
 }

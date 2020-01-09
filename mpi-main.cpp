@@ -1,5 +1,6 @@
 #include <iostream>
 #include <mpi.h>
+#include <stdio.h>
 #include <vector>
 #include "mpi-pr.h"
 using namespace std;
@@ -14,11 +15,10 @@ MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 MPI_Comm_size(MPI_COMM_WORLD, &size);
 
 string test(argv[1]);
-string init_str = "/home/annabro/final/data/";
-//string init_str = "data/";
+//string init_str = "/home/annabro/final/data/";
+string init_str = "data/";
 string infile = init_str+test+".max";
 string outfile = init_str+test+"my.soln";
-
 network net = parse(infile, rank, size);
 
 

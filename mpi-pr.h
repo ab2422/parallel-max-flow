@@ -7,12 +7,13 @@
 struct network {
     int src;  // index of src
     int sink; // index of sink
-    int n;    // num verts
+    int n;    // total num verts
     int m;    // num edges
+    int npp;  // nodes on THIS processor
     int *odeg; // array of out degs
     int *ideg; // array of in degs
     // adj[v] = {w_1, c(v,w_1), j_1, w_2, c(v,w_2), j_2 ...} 
-    //          for w_i adj to v, where j_i is ind of v in w's list
+    //          for w_i adj to v, where j_i is ind of v in w's badj list
     std::vector<std::vector<int>> adj; 
     // badj[w] = {v_1, j_1, v_2, j_2, ...} for w adj to v_i, j_i ind of v
     std::vector<std::vector<int>> badj;
