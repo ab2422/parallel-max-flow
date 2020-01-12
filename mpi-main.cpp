@@ -8,6 +8,9 @@ using namespace std;
 
 
 int main(int argc, char **argv){
+
+printf("starting main\n");
+
 int rank;
 int size;
 MPI_Init(&argc, &argv);
@@ -16,9 +19,11 @@ MPI_Comm_size(MPI_COMM_WORLD, &size);
 
 string test(argv[1]);
 //string init_str = "/home/annabro/final/data/";
-string init_str = "data/";
+//string init_str = "data/";
+string init_str = "parallel-max-flow/data/";
 string infile = init_str+test+".max";
 string outfile = init_str+test+"my.soln";
+printf("about to go into parse, p%d\n", rank);
 network net = parse(infile, rank, size);
 
 

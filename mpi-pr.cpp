@@ -38,6 +38,7 @@ Parses a file filename provided in DIMACS netflow format.
 * To ensure zero indexing, shifts indices in file all down by one
 */
 network parse(string filename, int rank, int size){
+    printf("starting parse\n");
     network net;
     string line;
     ifstream file;

@@ -1,16 +1,21 @@
 #include "catch2/catch.hpp"
 #include "mpi-pr.h"
 #include <mpi.h>
+#include <stdio.h>
 #include <iostream>
 #include <vector>
+#include <string>
 using namespace std;
+
+#define DPREFIX "parallel-max-flow/data/"
 
 TEST_CASE("Parser: serial basic net test", "[1proc]"){
     int rank;
     int size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    network net = parse("data/basic-net.max",rank,size);
+    string file = ((string) DPREFIX) + ((string) "basic-net.max");
+    network net = parse(file,rank,size);
     SECTION("check node setup"){
         REQUIRE(net.n == 6);
         REQUIRE(net.m == 8);
@@ -70,11 +75,13 @@ TEST_CASE("Parser: serial basic net test", "[1proc]"){
 
 
 TEST_CASE("Parser: parallel basic net test", "[2proc]"){
+    printf("starting parser test\n");
     int rank;
     int size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    network net = parse("data/basic-net.max",rank,size);
+    string file = ((string) DPREFIX) + ((string) "basic-net.max");
+    network net = parse(file,rank,size);
     SECTION("check node setup"){
         REQUIRE(net.n == 6);
         REQUIRE(net.m == 8);
@@ -151,7 +158,8 @@ TEST_CASE("SETUP: serial basic net test", "[1proc]"){
     int size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    network net = parse("data/basic-net.max",rank,size);
+    string file = ((string) DPREFIX) + ((string) "basic-net.max");
+    network net = parse(file,rank,size);
     resgraph graph = setup(&net,rank,size);
     SECTION("shared attributes"){
         REQUIRE(net.n==graph.n);
@@ -211,7 +219,8 @@ TEST_CASE("SETUP: parallel basic net test", "[2proc]"){
     int size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    network net = parse("data/basic-net.max",rank,size);
+    string file = ((string) DPREFIX) + ((string) "basic-net.max");
+    network net = parse(file,rank,size);
     resgraph graph = setup(&net,rank,size);
     SECTION("shared attributes"){
         REQUIRE(net.n==graph.n);
@@ -295,7 +304,8 @@ TEST_CASE("1 PULSE: serial basic net test", "[1proc],[sync]"){
     int size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    network net = parse("data/basic-net.max",rank,size);
+    string file = ((string) DPREFIX) + ((string) "basic-net.max");
+    network net = parse(file,rank,size);
     resgraph graph = setup(&net,rank,size);
     pulse(&graph);
 
@@ -345,7 +355,8 @@ TEST_CASE("1 PULSE: parallel basic net test", "[2proc],[sync]"){
     int size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    network net = parse("data/basic-net.max",rank,size);
+    string file = ((string) DPREFIX) + ((string) "basic-net.max");
+    network net = parse(file,rank,size);
     resgraph graph = setup(&net,rank,size);
     pulse(&graph);
 
@@ -396,7 +407,8 @@ TEST_CASE("2 PULSE: basic net test", "[1proc],[sync]"){
     int size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    network net = parse("data/basic-net.max",rank,size);
+    string file = ((string) DPREFIX) + ((string) "basic-net.max");
+    network net = parse(file,rank,size);
     resgraph graph = setup(&net,rank,size);
     pulse(&graph);
     pulse(&graph);
@@ -445,7 +457,8 @@ TEST_CASE("3 PULSE: basic net test", "[1proc],[sync]"){
     int size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    network net = parse("data/basic-net.max",rank,size);
+    string file = ((string) DPREFIX) + ((string) "basic-net.max");
+    network net = parse(file,rank,size);
     resgraph graph = setup(&net,rank,size);
     pulse(&graph);
     pulse(&graph);
