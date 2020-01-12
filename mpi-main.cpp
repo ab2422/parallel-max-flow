@@ -23,7 +23,7 @@ network net = parse(infile, rank, size);
 
 
 //double start = omp_get_wtime();
-//resgraph graph = setup(&net, rank, size);
+resgraph graph = setup(&net, rank, size);
 //while (graph.n_act > 0){
 //    pulse(&graph);
 //}
@@ -34,7 +34,8 @@ network net = parse(infile, rank, size);
 
 //cout << "Elapsed time: " << total << endl;
 
-//cleanup(graph,net);
+cleanup(&graph,&net);
+
 
 //check(init_str+test+".soln", outfile);
 
