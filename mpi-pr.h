@@ -2,6 +2,7 @@
 #define OMP_PUSH_RELABEL_CODE_H
 
 #include <vector>
+#include <queue>
 #include <iostream> 
 
 struct network {
@@ -34,6 +35,7 @@ struct resgraph : public network {
     // aflow[v] = {f(v,w_1), f(v,w_2), ...} for same order as adj
     std::vector<std::vector<int>> aflow;
     // bflow[w] = {f(v_1,w), f(v_2,w), ...} for same order as badj
+    // "backward flows" are negative
     std::vector<std::vector<int>> bflow;
 
     // adj_d[v] = list of heights of adj verts, same order as adj
@@ -42,8 +44,8 @@ struct resgraph : public network {
     std::vector<std::vector<int>> badj_d;
 
     int n_act;
-    std::vector<int> active;
-    std::vector<int> active_p;
+    std::queue<int> active;
+    std::queue<int> active_p;
 };
 
 network parse(std::string filename, int rank, int size);
@@ -51,6 +53,8 @@ network parse(std::string filename, int rank, int size);
 resgraph setup(network *net, int rank, int size);
 
 void pulse(resgraph *net_ptr);
+
+void check_comm(resgraph *net, int v, std::vector<int> *flowv, std::vector<int> *adj_dv, MPI_Request *reqv, std::vector<int> *arr_biv, std::vector<unsigned char> *arr_flagv, int buff[][4], std::queue<int> *avail, int arr_of_inds[], MPI_Status arr_of_stat[], int rank, int size);
 
 void async_pr(resgraph *net);
 
