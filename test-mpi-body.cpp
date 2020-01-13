@@ -7,7 +7,8 @@
 #include <string>
 using namespace std;
 
-#define DPREFIX "parallel-max-flow/data/"
+//#define DPREFIX "parallel-max-flow/data/"
+#define DPREFIX "data/"
 
 TEST_CASE("Parser: serial basic net test", "[1proc]"){
     int rank;
@@ -300,57 +301,6 @@ TEST_CASE("SETUP: parallel basic net test", "[2proc]"){
 }
 
 TEST_CASE("1 PULSE: serial basic net test", "[1proc],[sync]"){
-    int rank;
-    int size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    string file = ((string) DPREFIX) + ((string) "basic-net.max");
-    network net = parse(file,rank,size);
-    resgraph graph = setup(&net,rank,size);
-    pulse(&graph);
-
-    SECTION("labels"){
-        REQUIRE(graph.hght[0] == 6);
-        REQUIRE(graph.hght[1] == 1);
-        REQUIRE(graph.hght[2] == 1);
-        REQUIRE(graph.hght[3] == 0);
-        REQUIRE(graph.hght[4] == 0);
-        REQUIRE(graph.hght[5] == 0);
-    }
-
-    SECTION("excess"){
-        REQUIRE(graph.n_act == 2);
-        REQUIRE(graph.ex[0] == 0);
-        REQUIRE(graph.ex[1] == 5);
-        REQUIRE(graph.ex[2] == 15);
-        REQUIRE(graph.ex[3] == 0);
-        REQUIRE(graph.ex[4] == 0);
-        REQUIRE(graph.ex[5] == 0);
-    }
-
-    SECTION("aflows"){
-        REQUIRE(graph.aflow[0] == vector<int>({5,15}) );
-        REQUIRE(graph.aflow[1] == vector<int>({0, 0} ));
-        REQUIRE(graph.aflow[2] == vector<int>({0, 0} ));
-        REQUIRE(graph.aflow[3] == vector<int>({0}) );
-        REQUIRE(graph.aflow[4] == vector<int>({0} ));
-        REQUIRE(graph.aflow[5] == vector<int>({} ));
-    }
-
-    SECTION("bflows"){
-        REQUIRE(graph.bflow[0] == vector<int>({}));
-        REQUIRE(graph.bflow[1] == vector<int>({-5}));
-        REQUIRE(graph.bflow[2] == vector<int>({-15}));
-        REQUIRE(graph.bflow[3] == vector<int>({0, 0}));
-        REQUIRE(graph.bflow[4] == vector<int>({0, 0}));
-        REQUIRE(graph.bflow[5] == vector<int>({0, 0}));
-    }
-
-    cleanup(&graph,&net);
-}
-
-
-TEST_CASE("1 PULSE: parallel basic net test", "[2proc],[sync]"){
     int rank;
     int size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);

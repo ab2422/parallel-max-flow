@@ -138,11 +138,13 @@ network parse(string filename, int rank, int size){
                         net.badj[w-rank*npp].push_back(jv); //jv = w pos in v list
                     }else{
                         MPI_Irecv(rbuf,1,MPI_INT, w/npp, v*net.n+w, MPI_COMM_WORLD, &rreq);
+                        // wait for prev send to finish, so know sbuf avail
                         MPI_Wait(&sreq, &sstat);
                         sbuf[0] = jv;
                         MPI_Isend(sbuf, 1, MPI_INT, w/npp, v*net.n + w, MPI_COMM_WORLD,&sreq);
                         net.adj[v-rank*npp].push_back(w);
                         net.adj[v-rank*npp].push_back(cap);
+                        // wait for curr rec to finish, so can use data
                         MPI_Wait(&rreq, &rstat);
                         net.adj[v-rank*npp].push_back(rbuf[0]); 
                     }
@@ -165,10 +167,14 @@ network parse(string filename, int rank, int size){
         }
         file.close();
     }
+
     for (int j=0; j< (net.npp); j++){ 
         (net.adj[j]).shrink_to_fit();
         (net.badj[j]).shrink_to_fit();
     }
+
+    // deal w/ pending MPI_Sends...
+    MPI_Wait(&sreq,&sstat);
     
     return net;
 }
@@ -208,7 +214,7 @@ resgraph setup(network *inet, int rank, int size){
     onet.adj_d = vector<vector<int>>(onet.npp);
     onet.badj_d = vector<vector<int>>(onet.npp);
 
-    printf("about to loop, proc %d\n", rank);
+    //printf("about to loop, proc %d\n", rank);
     for (int v=0; v<onet.npp; v++){
         onet.ex[v]=0;
         onet.dex[v]=0;
@@ -248,11 +254,12 @@ resgraph setup(network *inet, int rank, int size){
         onet.hght[s] = onet.n;
 
         for (int i=1; i< size; i++){
-            printf("sending to %d, from proc %d\n", i, rank);
+            //printf("sending to %d, from proc %d\n", i, rank);
             MPI_Send(&num_sent,1,MPI_INT,i,i,MPI_COMM_WORLD);
         }
     } else {
-        printf("recv on proc %d\n",rank);
+        onet.n_act = 0;
+        //printf("recv on proc %d\n",rank);
         MPI_Recv(&num_sent,1,MPI_INT,onet.s_proc,rank,MPI_COMM_WORLD, &rstat);
     }
 
