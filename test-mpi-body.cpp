@@ -452,3 +452,60 @@ TEST_CASE("3 PULSE: basic net test", "[1proc],[sync]"){
     }
 
 }
+
+
+TEST_CASE("COMPLETE: basic net test", "[2proc]"){
+    int rank;
+    int size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    string file = ((string) DPREFIX) + ((string) "basic-net.max");
+    network net = parse(file,rank,size);
+    resgraph graph = setup(&net,rank,size);
+    async_pr(&net, rank, size);
+
+    SECTION("check forward flows"){
+        if (rank==0){
+            REQUIRE(net->aflow[0][0] == 5);
+            REQUIRE(net->aflow[0][1] == 10);
+            REQUIRE(net->aflow[1][0] == 5);
+            REQUIRE(net->aflow[1][1] == 0);
+            REQUIRE(net->aflow[2][0] == 5);
+            REQUIRE(net->aflow[2][1] == 5);
+        } else {
+            REQUIRE(net->aflow[0][0] == 10);
+            REQUIRE(net->aflow[1][0] == 4);
+            REQUIRE(net->aflow[2].size() == 0);
+        }
+    }
+    
+    SECTION("check backward flows"){
+        if (rank==0){
+            REQUIRE(net->bflow[0].size()==0);
+            REQUIRE(net->bflow[1][0] == -5);
+            REQUIRE(net->bflow[2][0] == -10);
+        } else {
+            REQUIRE(net->bflow[0][0] == -5);
+            REQUIRE(net->bflow[0][1] == -5);
+            REQUIRE(net->bflow[1][0] == 0);
+            REQUIRE(net->bflow[1][1] == -5);
+            REQUIRE(net->bflow[2][0] == -10);
+            REQUIRE(net->bflow[2][1] == -5);
+        }
+    }
+
+    SECTION("check anything else"){
+        if (rank == 0){
+            //REQUIRE(net->ex[0] == 15);
+            REQUIRE(net->ex[1] == 0);
+            REQUIRE(net->ex[2] == 0);
+        } else {
+            REQUIRE(net->ex[0] == 0);
+            REQUIRE(net->ex[1] == 0);
+            REQUIRE(net->ex[2] == 15);
+        }
+        REQUIRE(net->n_act == 0);
+        REQUIRE(net->active.size()==0);
+    }
+    cleanup(&graph, &net);
+}
