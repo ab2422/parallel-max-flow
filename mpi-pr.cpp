@@ -397,6 +397,47 @@ void pulse(resgraph *net_ptr){
 
 }
 
+void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Request *req,  int *bi, unsigned char *flagv, int buffi[], queue<int> *avail, int rank, int size){
+    if ((*flagv)/2 == 0){
+        if ((*flagv)%2 == 0) {
+            // done sending query,wait for response
+            MPI_Irecv(buffi,4,MPI_INT,w/net->std_npp,RESPONSE,MPI_COMM_WORLD, req);
+            (*flagv) = 3; // 11
+        } else {
+            //received query, send response
+            if (buffi[2] == 1 + net->hght[v]){
+                // accept
+                net->ex[v] += buffi[1];
+                (*flowvj) -= buffi[1]; 
+                buffi[0] = 1;
+            } else{
+                // reject
+                buffi[0]=0;
+            }
+            buffi[2] = buffi[1];
+            buffi[1]= v+rank*net->std_npp;
+            buffi[3] = net->hght[v];
+            MPI_Isend(buffi,4,MPI_INT,w/net->std_npp,RESPONSE,MPI_COMM_WORLD, req);
+            (*flagv) = 2; // 10
+        }
+    } else if ((*flagv)/2 == 1){
+        if (((*flagv)%2 == 0)&&(!(buffi[0]))){
+            // done receiving response: rejected
+            net->ex[v] += buffi[2];
+            (*flowvj) -= buffi[2]; 
+            (*adj_dvj) = buffi[3];
+            // TODO: when to update dv?????
+        }
+        // cleanup
+        (*flagv) = NOTHING;
+        (*avail).push(*bi);
+        (*bi) = -1;
+    } else {
+        printf("Invalid flag! Flag was %d\n", (*flagv));
+    }
+}
+
+
 void check_comm(resgraph *net, int v, vector<int> *flowv, vector<int> *adj_dv, MPI_Request *reqv, vector<int> *arr_biv, vector<unsigned char> *arr_flagv, int buff[][4], queue<int> *avail, int arr_of_inds[], int rank, int size){
         int outcount,w,j,bi;
         MPI_Testsome(net->odeg[v],reqv, &outcount, arr_of_inds,MPI_STATUSES_IGNORE);
@@ -406,43 +447,7 @@ void check_comm(resgraph *net, int v, vector<int> *flowv, vector<int> *adj_dv, M
                 j = arr_of_inds[i];
                 bi = (*arr_biv)[j]; //what buffer are we using?
                 w = net->adj[v][j];
-                if ((*arr_flagv)[j]/2 == 0){
-                    if ((*arr_flagv)[j]%2 == 0) {
-                        // done sending query,wait for response
-                        MPI_Irecv(buff[bi],4,MPI_INT,w/net->std_npp,RESPONSE,MPI_COMM_WORLD, & (reqv[j]));
-                        (*arr_flagv)[i] = 3; // 11
-                    } else {
-                        //received query, send response
-                        if (buff[bi][2] == 1 + net->hght[v]){
-                            // accept
-                            net->ex[v] += buff[bi][1];
-                            (*flowv)[j] -= buff[bi][1]; 
-                            buff[bi][0] = 1;
-                        } else{
-                            // reject
-                            buff[bi][0]=0;
-                        }
-                        buff[bi][2] = buff[bi][1];
-                        buff[bi][1]= v+rank*net->std_npp;
-                        buff[bi][3] = net->hght[v];
-                        MPI_Isend(buff[bi],4,MPI_INT,w/net->std_npp,RESPONSE,MPI_COMM_WORLD, &(reqv[j]));
-                        (*arr_flagv)[j] = 2; // 10
-                    }
-                } else if ((*arr_flagv)[j]/2 == 1){
-                    if (((*arr_flagv)[j]%2 == 0)&&(!(buff[bi][0]))){
-                        // done receiving response: rejected
-                        net->ex[v] += buff[bi][2];
-                        (*flowv)[j] -= buff[bi][2]; 
-                        (*adj_dv)[j] = buff[bi][3];
-                        // TODO: when to update dv?????
-                    }
-                    // cleanup
-                    (*arr_flagv)[j] = NOTHING;
-                    (*arr_biv)[j] = -1;
-                    (*avail).push(bi);
-                } else {
-                    printf("Invalid flag! Flag was %d\n", (*arr_flagv)[j]);
-                }
+                handle_comm(net, v, w, &((*flowv)[j]), &((*adj_dv)[j]), &(reqv[j]), &bi, &((*arr_flagv)[j]), buff[bi], avail, rank,size);
             }
         }
 }
@@ -594,41 +599,31 @@ void async_pr(resgraph *net,int rank,int size){
             //    }
             //}
         //}
-    }
 
-    for (int v=0; v<net->npp; v++){
-        e = net->ex[v];
-        // if v is active:
-        if ( ! ( (e==0) || (v==net->src) || (v==net->sink) ) ) {
-            // push flow on outgoing
-            for (int i=0; i<net->odeg[v]; i++){
-                w = net->adj[v][3*i];
-                dw = net->adj_d[v][i];
-                c = net->adj[v][3*i+1];
-                r = c - net->aflow[v][i];
-                win = w_in(w,net->npp);
-                if ((r>0) && (net->hght[v] == dw+1)) {
-                    if (win){
-                        loc_w = w-rank*(net->std_npp);
-                        ch = min(e,r);
-                        net->aflow[v][i] += ch;
-                        net->bflow[loc_w][net->adj[v][3*i+2]/3] -= ch;
-                        net->ex[v] -= ch;
-                        net->ex[loc_w] += ch;
-                    } else {
-                        if (out_req[v][i] != MPI_REQUEST_NULL){
-                            // since send completed, buff available
-                            // deal w/ prev update query
-                            MPI_Recv(buff[out_flag[v][i]], 3, MPI_INT, w/(net->std_npp), RESPONSE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                            
-                        }
+        for (int i=0; i<net->odeg[v]; i++){
+            w = net->adj[v][3*i];
+            dw = net->adj_d[v][i];
+            c = net->adj[v][3*i+1];
+            r = c - net->aflow[v][i];
+            win = w_in(w,net->npp);
+            if ((r>0) && (net->hght[v] == dw+1)) {
+                if (win){
+                    loc_w = w-rank*(net->std_npp);
+                    ch = min(e,r);
+                    net->aflow[v][i] += ch;
+                    net->bflow[loc_w][net->adj[v][3*i+2]/3] -= ch;
+                    net->ex[v] -= ch;
+                    net->ex[loc_w] += ch;
+                } else {
+                    while (out_flag[v][i] != NOTHING){
+                        MPI_Wait(&(out_req[v][i]), MPI_STATUS_IGNORE);
+                        handle_comm(net,v,w, &(net->aflow[v][i]), &(net->adj_d[v][i]), &(out_req[v][i]), &(out_bi[v][i]), &(out_flag[v][i]), buff[bi], &(avail), rank,size);
                     }
+                    
                 }
             }
         }
-
     }
-    
 }
 
 
