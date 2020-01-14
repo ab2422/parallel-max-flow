@@ -1,5 +1,5 @@
-#ifndef OMP_PUSH_RELABEL_CODE_H
-#define OMP_PUSH_RELABEL_CODE_H
+#ifndef MPI_PUSH_RELABEL_CODE_H
+#define MPI_PUSH_RELABEL_CODE_H
 
 #include <vector>
 #include <queue>

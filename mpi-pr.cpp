@@ -394,71 +394,21 @@ void pulse(resgraph *net_ptr){
     }
     }
     net_ptr->ex[0] = 0;
-
-}
-
-void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Request *req,  int *bi, unsigned char *flagv, int buffi[], queue<int> *avail, int rank, int size){
-    if ((*flagv)/2 == 0){
-        if ((*flagv)%2 == 0) {
-            // done sending query,wait for response
-            MPI_Irecv(buffi,4,MPI_INT,w/net->std_npp,RESPONSE,MPI_COMM_WORLD, req);
-            (*flagv) = 3; // 11
-        } else {
-            //received query, send response
-            if (buffi[2] == 1 + net->hght[v]){
-                // accept
-                net->ex[v] += buffi[1];
-                (*flowvj) -= buffi[1]; 
-                buffi[0] = 1;
-            } else{
-                // reject
-                buffi[0]=0;
-            }
-            buffi[2] = buffi[1];
-            buffi[1]= v+rank*net->std_npp;
-            buffi[3] = net->hght[v];
-            MPI_Isend(buffi,4,MPI_INT,w/net->std_npp,RESPONSE,MPI_COMM_WORLD, req);
-            (*flagv) = 2; // 10
-        }
-    } else if ((*flagv)/2 == 1){
-        if (((*flagv)%2 == 0)&&(!(buffi[0]))){
-            // done receiving response: rejected
-            net->ex[v] += buffi[2];
-            (*flowvj) -= buffi[2]; 
-            (*adj_dvj) = buffi[3];
-            // TODO: when to update dv?????
-        }
-        // cleanup
-        (*flagv) = NOTHING;
-        (*avail).push(*bi);
-        (*bi) = -1;
-    } else {
-        printf("Invalid flag! Flag was %d\n", (*flagv));
-    }
 }
 
 
-void check_comm(resgraph *net, int v, vector<int> *flowv, vector<int> *adj_dv, MPI_Request *reqv, vector<int> *arr_biv, vector<unsigned char> *arr_flagv, int buff[][4], queue<int> *avail, int arr_of_inds[], int rank, int size){
-        int outcount,w,j,bi;
-        MPI_Testsome(net->odeg[v],reqv, &outcount, arr_of_inds,MPI_STATUSES_IGNORE);
-        // remember: aflows are positive & bflows are neg, hence the signs working out!
-        if (outcount != MPI_UNDEFINED){
-            for (int i=0; i<outcount; i++){
-                j = arr_of_inds[i];
-                bi = (*arr_biv)[j]; //what buffer are we using?
-                w = net->adj[v][j];
-                handle_comm(net, v, w, &((*flowv)[j]), &((*adj_dv)[j]), &(reqv[j]), &bi, &((*arr_flagv)[j]), buff[bi], avail, rank,size);
-            }
-        }
-}
 /*
  * Asynchronous implementation, as described in Goldberg & Tarjan
  */
 void async_pr(resgraph *net,int rank,int size){
-    int w,v,loc_w,r,c,ch,e,d_p,dw,j,bi;
+    int w,v,z,loc_w; // verts
+    z=0;
+    int r,c,ch,e,d_p,dw; // p-r vars
+    int j,bi,tst; // comm vars
     MPI_Request *out_req[net->npp];
     MPI_Request *in_req[net->npp];
     int max_deg=0;
+
     // out_flag[v][i] ==  NOTHING when (v,net->adj[3*i]) has no pending operations
     // == 0 when pending a sent query, == 1 for rec query
     // == 2 for sent response, == 3 for rec response
@@ -466,11 +416,13 @@ void async_pr(resgraph *net,int rank,int size){
     vector<vector<int>> in_bi = vector<vector<int>>(net->npp);  
     vector<vector<unsigned char>> out_flag = vector<vector<unsigned char>>(net->npp);
     vector<vector<unsigned char>> in_flag = vector<vector<unsigned char>>(net->npp);
+
     // buffers for send & response to update queries
     // query buff[i] = [v,flow change,d(v)]
     // response buff[i] = [acc/rej, w, flow change, d(w)]
     int buff_size = net->npp;
     int buff[buff_size][4];
+
     // queue of indices of available buffers in buff
     queue<int> avail;
     for (int v=0; v<net->npp; v++){
@@ -605,21 +557,35 @@ void async_pr(resgraph *net,int rank,int size){
             dw = net->adj_d[v][i];
             c = net->adj[v][3*i+1];
             r = c - net->aflow[v][i];
+            ch = min(e,r);
             win = w_in(w,net->npp);
             if ((r>0) && (net->hght[v] == dw+1)) {
                 if (win){
                     loc_w = w-rank*(net->std_npp);
-                    ch = min(e,r);
                     net->aflow[v][i] += ch;
                     net->bflow[loc_w][net->adj[v][3*i+2]/3] -= ch;
                     net->ex[v] -= ch;
                     net->ex[loc_w] += ch;
                 } else {
-                    while (out_flag[v][i] != NOTHING){
-                        MPI_Wait(&(out_req[v][i]), MPI_STATUS_IGNORE);
-                        handle_comm(net,v,w, &(net->aflow[v][i]), &(net->adj_d[v][i]), &(out_req[v][i]), &(out_bi[v][i]), &(out_flag[v][i]), buff[bi], &(avail), rank,size);
+                    while ((out_flag[v][i] != NOTHING)|| (avail.empty())){
+                        MPI_Test(&(out_req[v][i]), &tst, MPI_STATUS_IGNORE);
+                        if (tst){
+                            handle_comm(net,v,w, &(net->aflow[v][i]), &(net->adj_d[v][i]), &(out_req[v][i]), &(out_bi[v][i]), &(out_flag[v][i]), buff[bi], &(avail), rank,size);
+                        } else {
+                            // check comm backlog while we wait!
+                            check_comm(net,z,&(net->aflow[z]), &(net->adj_d[z]), out_req[z], &(out_bi[z]), &(out_flag[z]), buff, &avail, arr_of_inds, rank,size);
+                            check_comm(net,z,&(net->bflow[z]), &(net->badj_d[z]), in_req[z], &(in_bi[z]), &(in_flag[z]), buff, &avail, arr_of_inds, rank,size);
+                            z = (z+1)%(net->npp);
+                        }
                     }
-                    
+                    bi = avail.front();
+                    avail.pop();
+                    buff[bi][0] = v+rank*net->std_npp;
+                    buff[bi][1] = ch;
+                    buff[bi][2] = net->hght[v]; 
+                    MPI_ISend(buff[bi], 3, MPI_INT, w/net->std_npp, QUERY, MPI_COMM_WORLD, &(out_req[v][i]));
+                    out_bi[v][i] = bi;
+                    out_flag[v][i] = 0; // 00
                 }
             }
         }
