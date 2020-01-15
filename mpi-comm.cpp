@@ -26,6 +26,9 @@ void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Req
         // just finished response
         if (((*flagv)/4 == 0)&&(!(buffi[0]))){
             // done receiving response: rejected
+            if ((net->ex[v] == 0) && (buffi[2]>0) && (v!= net->src) && (v != net->sink)){
+                net->active.push(v);
+            } 
             net->ex[v] += buffi[2];
             (*flowvj) -= buffi[2]; 
             (*adj_dvj) = buffi[3];
@@ -56,6 +59,9 @@ void listen_helper(resgraph *net, comm_data *cd, int bi, vector<vector<int>> *fl
 
     if (dv == 1 + net->hght[loc_w]){
         // accept
+        if ((net->ex[loc_w]==0) && (ch>0) && (w!=net->src) && (w!=net->sink){
+            net->active.push(loc_w);
+        }
         net->ex[loc_w] += ch;
         (*flow)[loc_w][i/sc] -= ch; 
         cd->buff[bi][0] = 1;

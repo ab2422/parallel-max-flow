@@ -400,6 +400,7 @@ void pulse(resgraph *net_ptr){
 void async_pr(resgraph *net,int rank,int size){
     int w,v,z,loc_w; // verts
     z=0;
+    int tally=0;
     int r,c,ch,e,d_p,dw; // p-r vars
     int j,bi,tst; // comm vars
     comm_data cds;
@@ -454,16 +455,18 @@ void async_pr(resgraph *net,int rank,int size){
     while (!(net->active.empty())) {
         v = net->active.front();
         net->active.pop();
-        e = net->ex[v];
         
         // check up on all pending communication to forward nodes
         check_comm(net,v, &cds, rank,size);
 
         for (int i=0; i<net->odeg[v]; i++){
+            listen(net,&cds,rank,size);
+            listen_distance(net,&cds,rank,size);
             w = net->adj[v][3*i];
             dw = net->adj_d[v][i];
             c = net->adj[v][3*i+1];
             r = c - net->aflow[v][i];
+            e = net->ex[v];
             ch = min(e,r);
             win = w_in(w,net->npp);
             if ((r>0) && (net->hght[v] == dw+1)) {
@@ -481,7 +484,7 @@ void async_pr(resgraph *net,int rank,int size){
                         } else {
                             // check comm backlog while we wait!
                             check_comm(net, z, &cds, rank,size);
-                            listen(net,v,&cds,rank,size);
+                            listen(net,&cds,rank,size);
                             z = (z+1)%(net->npp);
                         }
                     }
@@ -490,10 +493,53 @@ void async_pr(resgraph *net,int rank,int size){
                     cds.buff[bi][0] = v+rank*net->std_npp;
                     cds.buff[bi][1] = ch;
                     cds.buff[bi][2] = net->hght[v];
-                    cds.buff[bi][3] = net->adj[v][3*i+2]; 
-                    MPI_Isend(cds.buff[bi], 4, MPI_INT, w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cds.out_req[v][i]));
+                    cds.buff[bi][3] = w
+                    cds.buff[bi][4] = net->adj[v][3*i+2]; 
+                    MPI_Isend(cds.buff[bi], 5, MPI_INT, w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cds.out_req[v][i]));
                     cds.out_bi[v][i] = bi;
                     cds.out_flag[v][i] = 4; // 100 (send query fwd)
+                }
+            }
+        }
+        
+        for (int i=0; i<net->ideg[v]; i++){
+            listen(net,&cds,rank,size);
+            listen_distance(net,&cds,rank,size);
+            w = net->badj[v][2*i];
+            dw = net->badj_d[v][i];
+            r = 0 - net->aflow[v][i];
+            e = net->ex[v];
+            ch = min(e,r);
+            win = w_in(w,net->npp);
+            if ((r>0) && (net->hght[v] == dw+1)) {
+                if (win){
+                    loc_w = w-rank*(net->std_npp);
+                    net->bflow[v][i] += ch;
+                    net->aflow[loc_w][net->badj[v][2*i+1]/2] -= ch;
+                    net->ex[v] -= ch;
+                    net->ex[loc_w] += ch;
+                } else {
+                    while ((cds.in_flag[v][i] != NOTHING)|| (cds.avail.empty())){
+                        MPI_Test(&(cds.in_req[v][i]), &tst, MPI_STATUS_IGNORE);
+                        if (tst){
+                            handle_comm(net,v,w, &(net->bflow[v][i]), &(net->adj_d[v][i]), &(cds.in_req[v][i]), &(cds.in_bi[v][i]), &(cds.in_flag[v][i]), cds.buff[bi], &(cds.avail), rank,size);
+                        } else {
+                            // check comm backlog while we wait!
+                            check_comm(net, z, &cds, rank,size);
+                            listen(net,&cds,rank,size);
+                            z = (z+1)%(net->npp);
+                        }
+                    }
+                    bi = cds.avail.front();
+                    cds.avail.pop();
+                    cds.buff[bi][0] = v+rank*net->std_npp;
+                    cds.buff[bi][1] = ch;
+                    cds.buff[bi][2] = net->hght[v];
+                    cds.buff[bi][3] = w;
+                    cds.buff[bi][4] = net->badj[v][2*i+1]; 
+                    MPI_Isend(cds.buff[bi], 5, MPI_INT, w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cds.in_req[v][i]));
+                    cds.in_bi[v][i] = bi;
+                    cds.in_flag[v][i] = 4; // 100 (send query fwd)
                 }
             }
         }
