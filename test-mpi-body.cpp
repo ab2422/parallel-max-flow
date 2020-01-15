@@ -504,7 +504,7 @@ TEST_CASE("COMPLETE: basic net test", "[2proc]"){
             REQUIRE(net->ex[1] == 0);
             REQUIRE(net->ex[2] == 15);
         }
-        REQUIRE(net->n_act == 0);
+        //REQUIRE(net->n_act == 0);
         REQUIRE(net->active.size()==0);
     }
     cleanup(&graph, &net);
