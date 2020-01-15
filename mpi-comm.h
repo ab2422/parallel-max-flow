@@ -39,9 +39,14 @@ struct comm_data {
 // Distance updates, frow v to w: (bwd/fwd, v,dv,w,i), where fwd from v's persp,
 //          i is ind of v in w's adj or badj list (as appropriate)
  
-void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Request *req,  int *bi, unsigned char *flagv, int buffi[], std::queue<int> *avail, int rank, int size);
+/*
+ * Checks whether node v needs to be relabelled. If so, relabels & updates nbhrs
+ */
+void check_dist(resgraph *net, int v, comm_data *cd, int rank, int size);
 
-void check_comm_helper(resgraph *net, int v, std::vector<int> *flowv, std::vector<int> *adj_dv, MPI_Request *reqv, std::vector<int> *arr_biv, std::vector<unsigned char> *arr_flagv, int **buff, std::queue<int> *avail, int arr_of_inds[], int rank, int size);
+void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Request *req,  int *bi, unsigned char *flagv, int buffi[], std::queue<int> *avail, comm_data *cd, int rank, int size);
+
+void check_comm_helper(resgraph *net, int v, std::vector<int> *flowv, std::vector<int> *adj_dv, MPI_Request *reqv, std::vector<int> *arr_biv, std::vector<unsigned char> *arr_flagv, int **buff, std::queue<int> *avail, int arr_of_inds[], comm_data *cd, int rank, int size);
 
 /*
  * Checks status of all pending communications, and if completed, processes them
@@ -54,6 +59,7 @@ void listen_helper(resgraph *net, comm_data *cd, int bi, std::vector<std::vector
  * Listens for incoming distance updates & processes them.
  */
 void listen_distance(resgraph *net, comm_data *cd, int rank, int size);
+
 
 /*
  * Listens for incoming queries, processes them, and posts response
