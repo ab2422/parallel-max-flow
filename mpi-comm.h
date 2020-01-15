@@ -14,14 +14,15 @@ struct comm_data {
     std::vector<std::vector<int>> in_bi;
     std::vector<std::vector<int>> dist_adj_bi;
     std::vector<std::vector<int>> dist_badj_bi;
-
     // OUT_FLAG[V][I] ==  nothing WHEN (V,NET->ADJ[3*I]) HAS NO PENDING OPERATIONS
     // == 0 WHEN PENDING A SENT QUERY, == 1 FOR REC QUERY
     // == 2 FOR SENT RESPONSE, == 3 FOR REC RESPONSE
     std::vector<std::vector<unsigned char>> out_flag;
     std::vector<std::vector<unsigned char>> in_flag;
-    // for receives: one for every proc
-    MPI_Request *rec_req;
+
+    // for query receives & distance comm: one for every proc
+    MPI_Request *dist_req;
+    queue<int> req_avail;
 
     // for both
     int buff_size;

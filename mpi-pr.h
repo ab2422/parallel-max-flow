@@ -75,6 +75,11 @@ void check_comm(resgraph *net, int v, std::vector<int> *flowv, std::vector<int> 
 
 void async_pr(resgraph *net,int rank, int size);
 
+/*
+ * Checks whether node v needs to be relabelled. If so, relabels & updates nbhrs
+ */
+void check_dist(resgraph *net, int v, int rank, int size);
+
 void output(resgraph net, std::string filename, double time);
 
 bool check(std::string correct, std::string test);

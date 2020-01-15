@@ -543,9 +543,94 @@ void async_pr(resgraph *net,int rank,int size){
                 }
             }
         }
+        if (net->ex[v] >0){
+            net->active.push(v);
+        }
     }
 }
 
+void check_dist(resgraph *net, int v, comm_data *cd){
+    int min_dist = 2*n;
+    bool update = 1;
+    int w,dw,z;
+    z = 2*net->npp/3;
+    int dv = net->hght[v];
+    if ( (net->ex[v]>0) && (v!=net->src) && (v!=net->sink) ){
+        for (int i=0; i<net->odeg[v]; i++){
+            if (net->adj[v][3*i+1] - net->aflow[v][i] >0) {
+                dw = net->adj_d[i];
+                update = update && (dv <= dw);
+                min_dist = min(min_dist,dw);
+            }
+        }
+        for (int i=0; i<net->ideg[v]; i++){
+            if (0 - net->bflow[v][i] >0) {
+                dw = net->badj_d[i];
+                update = update && (dv <= dw);
+                min_dist = min(min_dist,dw);
+            }
+        }
+    } else {
+        update = 0;
+    }
+    
+    // maybe do update
+    bool win;
+    int loc_w;
+    int j;
+    int bi;
+    MPI_Request req;
+    if (update) {
+
+        net->hght[v] = min_dist+1;
+
+        while (net->avail.empty()){
+            check_comm(net,z,cd,rank,size);
+            z = (z+1)%net->npp;
+        }
+        bi = net->avail.front();
+        net->avail.pop();
+
+        for (int i=0; i<net->odeg[v]; i++){
+            w = net->adj[v][3*i];
+            loc_w = w - rank*net->std_npp;
+            j = net->adj[v][3*i+2];
+            win = w_in(w,net->std_npp);
+            if (win) {
+                net->badj_d[loc_w][j/2]
+            } else {
+                MPI_Wait(&req, MPI_STATUS_IGNORE);
+                cd->buff[bi][0] = 0; //fwd
+                cd->buff[bi][1] = v+rank*net->std_npp;
+                cd->buff[bi][2] = net->hght[v];
+                cd->buff[bi][3] = w;
+                cd->buff[bi][4] = j;
+                MPI_Isend(buff[bi],5,MPI_INT,w/net->std_npp, UPDATE_DEST, MPI_COMM_WORLD, &req);
+            }
+        }
+
+        for (int i=0; i<net->ideg[v]; i++){
+            w = net->badj[v][2*i];
+            loc_w = w - rank*net->std_npp;
+            j = net->badj[v][2*i+1];
+            win = w_in(w,net->std_npp);
+            if (win) {
+                net->adj_d[loc_w][j/3]
+            } else {
+                MPI_Wait(&req, MPI_STATUS_IGNORE);
+                cd->buff[bi][0] = 1; //bwd
+                cd->buff[bi][1] = v+rank*net->std_npp;
+                cd->buff[bi][2] = net->hght[v];
+                cd->buff[bi][3] = w;
+                cd->buff[bi][4] = j;
+                MPI_Isend(buff[bi],5,MPI_INT,w/net->std_npp, UPDATE_DEST, MPI_COMM_WORLD, &req);
+            }
+        }
+
+        MPI_Wait(&req, MPI_STATUS_IGNORE);
+        net->avail.push(bi);
+    }
+}
 
 
 /*
