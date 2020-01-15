@@ -92,7 +92,7 @@ void check_dist(resgraph *net, int v, comm_data *cd, int rank, int size){
     }
 }
 
-void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Request *req,  int *bi, unsigned char *flagv, int buffi[], queue<int> *avail, comm_data *cd, int rank, int size){
+void handle_comm(resgraph *net, int v, int gl_w, int *flowvj, int *adj_dvj, MPI_Request *req,  int *bi, unsigned char *flagv, int buffi[], queue<int> *avail, comm_data *cd, int rank, int size){
     if ( (((*flagv)/2)%2 == 0) && ( (*flagv)/8 == 0) ){
         // just finished query
         if ( (*flagv)/4 ==0) {
@@ -101,10 +101,10 @@ void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Req
         } else{
             // just finished sending query, wait for response
             if ((*flagv)%2 == 0) {
-                MPI_Irecv(buffi,5,MPI_INT,w/net->std_npp,FWD_RESPONSE,MPI_COMM_WORLD, req);
+                MPI_Irecv(buffi,5,MPI_INT,gl_w/net->std_npp,FWD_RESPONSE,MPI_COMM_WORLD, req);
                 (*flagv) = 2; // 010 (receive response fwd)
             } else {
-                MPI_Irecv(buffi,5,MPI_INT,w/net->std_npp,BWD_RESPONSE,MPI_COMM_WORLD, req);
+                MPI_Irecv(buffi,5,MPI_INT,gl_w/net->std_npp,BWD_RESPONSE,MPI_COMM_WORLD, req);
                 (*flagv) = 3; // 011 (receive response bwd)
             }
         }
@@ -112,13 +112,12 @@ void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Req
         // just finished response
         if (((*flagv)/4 == 0)&&(!(buffi[0]))){
             // done receiving response: rejected
-            if ((net->ex[v] == 0) && (buffi[2]>0) && (v!= net->src) && (v != net->sink)){
+            if ((net->ex[v] == 0) && (buffi[2]>0) && (!is_src_loc(net,v,rank,size)) && (!is_sink_loc(net, v,rank,size))){
                 net->active.push(v);
             } 
             net->ex[v] += buffi[2];
             (*flowvj) -= buffi[2]; 
             (*adj_dvj) = buffi[3];
-            // TODO: when to update dv?????
             check_dist(net,v,cd,rank,size);
         }
         // cleanup

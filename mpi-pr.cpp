@@ -15,7 +15,13 @@ using namespace std;
 #define min(a,b) ( ((a)<(b)) ? (a) : (b) )
 #define w_in(w,npp) ( (rank*(npp) <= (w)) && ((w) < ((rank+1)*(npp))) )
 
+bool is_src_loc(resgraph *net, int loc_v, int rank, int size){
+    return  (net->s_proc == rank) && ( (loc_v +rank*net->std_npp) == net->src);
+}
 
+bool is_sink_loc(resgraph *net, int loc_v, int rank, int size){
+    return (net->sink == (loc_v + rank*net->std_npp));
+}
 
 static void wait_for_debugger(){
     volatile int i = 0;
@@ -398,7 +404,7 @@ void pulse(resgraph *net_ptr){
  * Asynchronous implementation, as described in Goldberg & Tarjan
  */
 void async_pr(resgraph *net,int rank,int size){
-    int w,v,z,loc_w; // verts
+    int gl_w,v,z,loc_w; // verts
     z=0;
     int tally=0;
     int r,c,ch,e,d_p,dw; // p-r vars
@@ -462,16 +468,16 @@ void async_pr(resgraph *net,int rank,int size){
         for (int i=0; i<net->odeg[v]; i++){
             listen(net,&cds,rank,size);
             listen_distance(net,&cds,rank,size);
-            w = net->adj[v][3*i];
+            gl_w = net->adj[v][3*i];
             dw = net->adj_d[v][i];
             c = net->adj[v][3*i+1];
             r = c - net->aflow[v][i];
             e = net->ex[v];
             ch = min(e,r);
-            win = w_in(w,net->npp);
+            win = w_in(gl_w,net->npp);
             if ((r>0) && (net->hght[v] == dw+1)) {
                 if (win){
-                    loc_w = w-rank*(net->std_npp);
+                    loc_w = gl_w-rank*(net->std_npp);
                     net->aflow[v][i] += ch;
                     net->bflow[loc_w][net->adj[v][3*i+2]/3] -= ch;
                     net->ex[v] -= ch;
@@ -480,7 +486,7 @@ void async_pr(resgraph *net,int rank,int size){
                     while ((cds.out_flag[v][i] != NOTHING)|| (cds.avail.empty())){
                         MPI_Test(&(cds.out_req[v][i]), &tst, MPI_STATUS_IGNORE);
                         if (tst){
-                            handle_comm(net,v,w, &(net->aflow[v][i]), &(net->adj_d[v][i]), &(cds.out_req[v][i]), &(cds.out_bi[v][i]), &(cds.out_flag[v][i]), cds.buff[bi], &(cds.avail), &cds, rank,size);
+                            handle_comm(net,v,gl_w, &(net->aflow[v][i]), &(net->adj_d[v][i]), &(cds.out_req[v][i]), &(cds.out_bi[v][i]), &(cds.out_flag[v][i]), cds.buff[bi], &(cds.avail), &cds, rank,size);
                         } else {
                             // check comm backlog while we wait!
                             check_comm(net, z, &cds, rank,size);
@@ -493,9 +499,9 @@ void async_pr(resgraph *net,int rank,int size){
                     cds.buff[bi][0] = v+rank*net->std_npp;
                     cds.buff[bi][1] = ch;
                     cds.buff[bi][2] = net->hght[v];
-                    cds.buff[bi][3] = w;
+                    cds.buff[bi][3] = gl_w;
                     cds.buff[bi][4] = net->adj[v][3*i+2]; 
-                    MPI_Isend(cds.buff[bi], 5, MPI_INT, w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cds.out_req[v][i]));
+                    MPI_Isend(cds.buff[bi], 5, MPI_INT, gl_w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cds.out_req[v][i]));
                     cds.out_bi[v][i] = bi;
                     cds.out_flag[v][i] = 4; // 100 (send query fwd)
                 }
@@ -505,15 +511,15 @@ void async_pr(resgraph *net,int rank,int size){
         for (int i=0; i<net->ideg[v]; i++){
             listen(net,&cds,rank,size);
             listen_distance(net,&cds,rank,size);
-            w = net->badj[v][2*i];
+            gl_w = net->badj[v][2*i];
             dw = net->badj_d[v][i];
             r = 0 - net->aflow[v][i];
             e = net->ex[v];
             ch = min(e,r);
-            win = w_in(w,net->npp);
+            win = w_in(gl_w,net->npp);
             if ((r>0) && (net->hght[v] == dw+1)) {
                 if (win){
-                    loc_w = w-rank*(net->std_npp);
+                    loc_w = gl_w-rank*(net->std_npp);
                     net->bflow[v][i] += ch;
                     net->aflow[loc_w][net->badj[v][2*i+1]/2] -= ch;
                     net->ex[v] -= ch;
@@ -522,7 +528,7 @@ void async_pr(resgraph *net,int rank,int size){
                     while ((cds.in_flag[v][i] != NOTHING)|| (cds.avail.empty())){
                         MPI_Test(&(cds.in_req[v][i]), &tst, MPI_STATUS_IGNORE);
                         if (tst){
-                            handle_comm(net,v,w, &(net->bflow[v][i]), &(net->adj_d[v][i]), &(cds.in_req[v][i]), &(cds.in_bi[v][i]), &(cds.in_flag[v][i]), cds.buff[bi], &(cds.avail), &cds, rank,size);
+                            handle_comm(net,v,gl_w, &(net->bflow[v][i]), &(net->adj_d[v][i]), &(cds.in_req[v][i]), &(cds.in_bi[v][i]), &(cds.in_flag[v][i]), cds.buff[bi], &(cds.avail), &cds, rank,size);
                         } else {
                             // check comm backlog while we wait!
                             check_comm(net, z, &cds, rank,size);
@@ -535,9 +541,9 @@ void async_pr(resgraph *net,int rank,int size){
                     cds.buff[bi][0] = v+rank*net->std_npp;
                     cds.buff[bi][1] = ch;
                     cds.buff[bi][2] = net->hght[v];
-                    cds.buff[bi][3] = w;
+                    cds.buff[bi][3] = gl_w;
                     cds.buff[bi][4] = net->badj[v][2*i+1]; 
-                    MPI_Isend(cds.buff[bi], 5, MPI_INT, w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cds.in_req[v][i]));
+                    MPI_Isend(cds.buff[bi], 5, MPI_INT, gl_w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cds.in_req[v][i]));
                     cds.in_bi[v][i] = bi;
                     cds.in_flag[v][i] = 4; // 100 (send query fwd)
                 }

@@ -63,6 +63,10 @@ struct resgraph : public network {
     std::queue<int> active_p;
 };
 
+bool is_src_loc(resgraph *net, int loc_v, int rank, int size);
+
+bool is_sink_loc(resgraph *net, int loc_v, int rank, int size);
+
 network parse(std::string filename, int rank, int size);
 
 resgraph setup(network *net, int rank, int size);

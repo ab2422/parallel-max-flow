@@ -22,10 +22,16 @@ string init_str = "data/";
 //string init_str = "parallel-max-flow/data/";
 string infile = init_str+test+".max";
 string outfile = init_str+test+"my.soln";
+cout << infile << endl;
 network net = parse(infile, rank, size);
 
-//double start = omp_get_wtime();
+double start = MPI_Wtime();
 resgraph graph = setup(&net, rank, size);
+
+async_pr(&graph, rank,size);
+
+double end = MPI_Wtime();
+
 //while (graph.n_act > 0){
 //    pulse(&graph);
 //}
@@ -35,7 +41,7 @@ resgraph graph = setup(&net, rank, size);
 //output(graph, outfile, total);
 
 //cout << "Elapsed time: " << total << endl;
-
+printf("Elapsed time: %d sec on processor %d\n", end-start, rank);
 
 cleanup(&graph,&net);
 
