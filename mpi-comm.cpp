@@ -38,7 +38,7 @@ void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Req
         (*flagv) = NOTHING;
         (*avail).push(*bi);
         (*bi) = -1;
-    } else if ( ((*flagv)/8 == 1) && ( (*flagv)/4 == 1 ){
+    } else if ( ((*flagv)/8 == 1) && ( (*flagv)/4 == 1) ){
         // finished sending distance update
         (*flagv) = NOTHING;
         (*avail).push(*bi);
@@ -59,7 +59,7 @@ void listen_helper(resgraph *net, comm_data *cd, int bi, vector<vector<int>> *fl
 
     if (dv == 1 + net->hght[loc_w]){
         // accept
-        if ((net->ex[loc_w]==0) && (ch>0) && (w!=net->src) && (w!=net->sink){
+        if ((net->ex[loc_w]==0) && (ch>0) && (w!=net->src) && (w!=net->sink)){
             net->active.push(loc_w);
         }
         net->ex[loc_w] += ch;
@@ -95,12 +95,12 @@ void listen_distance(resgraph *net, comm_data *cd, int rank, int size){
         bi = cd->avail.front();
         cd->avail.pop();
         MPI_Recv(cd->buff[bi], 5, MPI_INT, src, DIST_UPDATE, MPI_COMM_WORLD, &stat);
-        v= buff[bi][1];
-        dv = buff[bi][2];
-        i = buff[bi][3];
-        w = buff[bi][4];
+        v = cd->buff[bi][1];
+        dv= cd->buff[bi][2];
+        i = cd->buff[bi][3];
+        w = cd->buff[bi][4];
         loc_w = w - rank*net->std_npp;
-        if (buff[bi][0] == 0){
+        if (cd->buff[bi][0] == 0){
             // forward edge for sender
             net->badj_d[w][i/2] = dv;
         } else {

@@ -493,7 +493,7 @@ void async_pr(resgraph *net,int rank,int size){
                     cds.buff[bi][0] = v+rank*net->std_npp;
                     cds.buff[bi][1] = ch;
                     cds.buff[bi][2] = net->hght[v];
-                    cds.buff[bi][3] = w
+                    cds.buff[bi][3] = w;
                     cds.buff[bi][4] = net->adj[v][3*i+2]; 
                     MPI_Isend(cds.buff[bi], 5, MPI_INT, w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cds.out_req[v][i]));
                     cds.out_bi[v][i] = bi;

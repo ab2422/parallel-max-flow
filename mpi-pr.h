@@ -4,6 +4,7 @@
 #include <vector>
 #include <queue>
 #include <iostream> 
+#include <mpi.h>
 
 // in binary order, our tags
 #define FWD_QUERY 123
@@ -72,7 +73,7 @@ void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Req
 
 void check_comm(resgraph *net, int v, std::vector<int> *flowv, std::vector<int> *adj_dv, MPI_Request *reqv, std::vector<int> *arr_biv, std::vector<unsigned char> *arr_flagv, int buff[][4], std::queue<int> *avail, int arr_of_inds[], MPI_Status arr_of_stat[], int rank, int size);
 
-void async_pr(resgraph *net);
+void async_pr(resgraph *net,int rank, int size);
 
 void output(resgraph net, std::string filename, double time);
 
