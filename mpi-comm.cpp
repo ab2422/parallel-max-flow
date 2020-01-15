@@ -4,6 +4,7 @@
 #include <vector>
 #include <queue>
 #include "mpi-comm.h"
+#include "mpi-pr.h"
 using namespace std;
 
 void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Request *req,  int *bi, unsigned char *flagv, int buffi[], queue<int> *avail, int rank, int size){
@@ -33,6 +34,7 @@ void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Req
             (*flowvj) -= buffi[2]; 
             (*adj_dvj) = buffi[3];
             // TODO: when to update dv?????
+            check_dist(net,v,rank,size);
         }
         // cleanup
         (*flagv) = NOTHING;

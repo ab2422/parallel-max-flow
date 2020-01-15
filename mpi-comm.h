@@ -22,7 +22,6 @@ struct comm_data {
 
     // for query receives & distance comm: one for every proc
     MPI_Request *dist_req;
-    queue<int> req_avail;
 
     // for both
     int buff_size;
