@@ -449,9 +449,8 @@ void async_pr(resgraph *net,int rank,int size){
     }
     cds.arr_of_inds = (int*) malloc(max_deg*sizeof(int));
 
+    // start actual algo
     bool win;
-    int outcount=0;
-
     while (!(net->active.empty())) {
         v = net->active.front();
         net->active.pop();
@@ -482,6 +481,7 @@ void async_pr(resgraph *net,int rank,int size){
                         } else {
                             // check comm backlog while we wait!
                             check_comm(net, z, &cds, rank,size);
+                            listen(net,v,&cds,rank,size);
                             z = (z+1)%(net->npp);
                         }
                     }
@@ -489,10 +489,11 @@ void async_pr(resgraph *net,int rank,int size){
                     cds.avail.pop();
                     cds.buff[bi][0] = v+rank*net->std_npp;
                     cds.buff[bi][1] = ch;
-                    cds.buff[bi][2] = net->hght[v]; 
-                    MPI_Isend(cds.buff[bi], 3, MPI_INT, w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cds.out_req[v][i]));
+                    cds.buff[bi][2] = net->hght[v];
+                    cds.buff[bi][3] = net->adj[v][3*i+2]; 
+                    MPI_Isend(cds.buff[bi], 4, MPI_INT, w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cds.out_req[v][i]));
                     cds.out_bi[v][i] = bi;
-                    cds.out_flag[v][i] = 0; // 00
+                    cds.out_flag[v][i] = 4; // 100 (send query fwd)
                 }
             }
         }

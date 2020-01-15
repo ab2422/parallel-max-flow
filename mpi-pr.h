@@ -10,11 +10,14 @@
 #define BWD_QUERY 125
 #define FWD_RESPONSE 124
 #define BWD_RESPONSE 126
-// REQUIRE: NOTHING >= 8
-#define NOTHING 8
+#define DIST_UPDATE 300
+// REQUIRE: NOTHING >= 16
+#define NOTHING 32
 
-// For binary 2-digit d_2d_1d_0: d_2 = send/receive,  
-//                               d_1 = response/query, d_0 = bwd/fwd (where 1/0).
+// For binary 4-digit d_2d_1d_0: d_3 = distance / affirmation ,
+//                               d_2 = send/receive,  
+//                               d_1 = response/query,
+//                               d_0 = bwd/fwd (where 1/0).
 
 struct network {
     int src;  // index of src

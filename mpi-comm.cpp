@@ -7,7 +7,7 @@
 using namespace std;
 
 void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Request *req,  int *bi, unsigned char *flagv, int buffi[], queue<int> *avail, int rank, int size){
-    if (((*flagv)/2)%2 == 0){
+    if ( (((*flagv)/2)%2 == 0) && ( (*flagv)/8 == 0) ){
         // just finished query
         if ( (*flagv)/4 ==0) {
             //just finished receiving query 
@@ -22,7 +22,7 @@ void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Req
                 (*flagv) = 3; // 011 (receive response bwd)
             }
         }
-    } else if (((*flagv)/2)%2 == 1){
+    } else if ( (((*flagv)/2)%2 == 1) && ( (*flagv)/8 == 0)){
         // just finished response
         if (((*flagv)/4 == 0)&&(!(buffi[0]))){
             // done receiving response: rejected
@@ -35,6 +35,11 @@ void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Req
         (*flagv) = NOTHING;
         (*avail).push(*bi);
         (*bi) = -1;
+    } else if ( ((*flagv)/8 == 1) && ( (*flagv)/4 == 1 ){
+        // finished sending distance update
+        (*flagv) = NOTHING;
+        (*avail).push(*bi);
+        (*bi)=-1;
     } else {
         printf("Invalid flag! Flag was %d\n", (*flagv));
     }
@@ -45,8 +50,8 @@ void listen_helper(resgraph *net, comm_data *cd, int bi, vector<vector<int>> *fl
     int v = cd->buff[bi][0]; // global!
     int ch = cd->buff[bi][1];
     int dv = cd->buff[bi][2];
-    int i = cd->buff[bi][3];
-    int w = (*adj)[v][i]; // global!
+    int w = cd->buff[bi][3];
+    int i = cd->buff[bi][4];
     int loc_w = w - rank*net->std_npp;
 
     if (dv == 1 + net->hght[loc_w]){
@@ -67,6 +72,38 @@ void listen_helper(resgraph *net, comm_data *cd, int bi, vector<vector<int>> *fl
     *flagv_pt = &((*flagarr)[loc_w][i/sc]);
 }
 
+void listen_distance(resgraph *net, comm_data *cd, int rank, int size){
+    int flag=1;
+    int src;
+    int i,bi;
+    int v,w,loc_w,dv;
+    int z = (net->std_npp/2)%net->npp;
+    MPI_Status stat;
+    MPI_Iprobe(MPI_ANY_SOURCE, DIST_UPDATE, MPI_COMM_WORLD, &flag, &stat);
+    while (flag) {
+        while (cd->avail.empty()) {
+            check_comm(net,z,cd,rank,size);
+            z = (z+1)%net->npp;
+        }
+        src = stat.MPI_SOURCE;
+        bi = cd->avail.front();
+        cd->avail.pop();
+        MPI_Recv(cd->buff[bi], 5, MPI_INT, src, DIST_UPDATE, MPI_COMM_WORLD, &stat);
+        v= buff[bi][1];
+        dv = buff[bi][2];
+        i = buff[bi][3];
+        w = buff[bi][4];
+        loc_w = w - rank*net->std_npp;
+        if (buff[bi][0] == 0){
+            // forward edge for sender
+            net->badj_d[w][i/2] = dv;
+        } else {
+            // bwd edge for sender
+            net->adj_d[w][i/3]= dv;
+        }
+    }
+}
+
 void listen(resgraph *net, comm_data *cd, int rank, int size){
     int flag = 1;
     unsigned char *flagv; // pts to appropriate flag in cd
@@ -83,13 +120,13 @@ void listen(resgraph *net, comm_data *cd, int rank, int size){
     while (flag){
         while (cd->avail.empty()){
             check_comm(net, z, cd ,rank,size);
-            z++;
+            z = (z+1)%net->npp;
         }
         bi = cd->avail.front();
         cd->avail.pop();
         src = stat.MPI_SOURCE;
         
-        MPI_Recv(cd->buff[bi], 4, MPI_INT, src, FWD_QUERY, MPI_COMM_WORLD, &stat);
+        MPI_Recv(cd->buff[bi], 5, MPI_INT, src, FWD_QUERY, MPI_COMM_WORLD, &stat);
         listen_helper(net,cd,bi,&(net->aflow), &(net->adj), &(cd->out_flag), 3, &req_pt, &flagv, rank, size);
         MPI_Isend(cd->buff[bi], 5, MPI_INT, w/net->std_npp, FWD_RESPONSE, MPI_COMM_WORLD, req_pt);
         (*flagv) = 6; // 110 (send response fwd)
@@ -107,7 +144,7 @@ void listen(resgraph *net, comm_data *cd, int rank, int size){
         cd->avail.pop();
         src = stat.MPI_SOURCE;
     
-        MPI_Recv(cd->buff[bi], 4, MPI_INT, src, BWD_QUERY, MPI_COMM_WORLD, &stat);
+        MPI_Recv(cd->buff[bi], 5, MPI_INT, src, BWD_QUERY, MPI_COMM_WORLD, &stat);
         listen_helper(net,cd,bi,&(net->bflow), &(net->badj), &(cd->in_flag), 2, &req_pt, &flagv, rank, size);
         MPI_Isend(cd->buff[bi], 5, MPI_INT, w/net->std_npp, BWD_RESPONSE, MPI_COMM_WORLD, req_pt);
         (*flagv) = 7; // 111 (send response bwd) 
