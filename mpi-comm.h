@@ -4,31 +4,7 @@
 #include <vector>
 #include <queue>
 #include <iostream> 
-#include "mpi-pr.h"
-
-struct comm_data {
-    // for send requests: one for every edge
-    MPI_Request **out_req;
-    MPI_Request **in_req;
-    std::vector<std::vector<int>> out_bi;
-    std::vector<std::vector<int>> in_bi;
-    std::vector<std::vector<int>> dist_adj_bi;
-    std::vector<std::vector<int>> dist_badj_bi;
-    // OUT_FLAG[V][I] ==  nothing WHEN (V,NET->ADJ[3*I]) HAS NO PENDING OPERATIONS
-    // == 0 WHEN PENDING A SENT QUERY, == 1 FOR REC QUERY
-    // == 2 FOR SENT RESPONSE, == 3 FOR REC RESPONSE
-    std::vector<std::vector<unsigned char>> out_flag;
-    std::vector<std::vector<unsigned char>> in_flag;
-
-    // for query receives & distance comm: one for every proc
-    MPI_Request *dist_req;
-
-    // for both
-    int buff_size;
-    int **buff;
-    std::queue<int> avail;
-    int *arr_of_inds;
-};
+#include "mpi-data.h"
 
 
 // Queries, from v to w: (v, ch, d(v),w,i), where ch = change in flow

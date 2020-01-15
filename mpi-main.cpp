@@ -2,7 +2,9 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <vector>
+#include "mpi-data.h"
 #include "mpi-pr.h"
+#include "mpi-comm.h"
 using namespace std;
 
 
@@ -27,8 +29,8 @@ network net = parse(infile, rank, size);
 
 double start = MPI_Wtime();
 resgraph graph = setup(&net, rank, size);
-
-async_pr(&graph, rank,size);
+comm_data cds = setup_cd(&graph, rank, size);
+async_pr(&graph, &cds, rank,size);
 
 double end = MPI_Wtime();
 

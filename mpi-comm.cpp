@@ -93,7 +93,9 @@ void check_dist(resgraph *net, int v, comm_data *cd, int rank, int size){
 }
 
 void handle_comm(resgraph *net, int v, int gl_w, int *flowvj, int *adj_dvj, MPI_Request *req,  int *bi, unsigned char *flagv, int buffi[], queue<int> *avail, comm_data *cd, int rank, int size){
-    if ( (((*flagv)/2)%2 == 0) && ( (*flagv)/8 == 0) ){
+    if ((*flagv) == NOTHING){
+        // do nothing!
+    } else if ( (((*flagv)/2)%2 == 0) && ( (*flagv)/8 == 0) ){
         // just finished query
         if ( (*flagv)/4 ==0) {
             //just finished receiving query 

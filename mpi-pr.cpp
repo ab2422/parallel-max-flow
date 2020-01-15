@@ -1,14 +1,15 @@
+#include "mpi-pr.h"
+#include "mpi-data.h"
+#include "mpi-comm.h"
+#include <mpi.h>
 #include <math.h>
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <stdio.h>
-#include <mpi.h>
 #include <unistd.h>
 #include <vector>
 #include <queue>
-#include "mpi-pr.h"
-#include "mpi-comm.h"
 using namespace std;
 
 #define max(a,b) ( ((a)>(b)) ? (a) : (b) )
@@ -399,20 +400,11 @@ void pulse(resgraph *net_ptr){
     net_ptr->ex[0] = 0;
 }
 
-
-/*
- * Asynchronous implementation, as described in Goldberg & Tarjan
- */
-void async_pr(resgraph *net,int rank,int size){
-    int gl_w,v,z,loc_w; // verts
-    z=0;
-    int tally=0;
-    int r,c,ch,e,d_p,dw; // p-r vars
-    int j,bi,tst; // comm vars
+comm_data setup_cd(resgraph *net, int rank, int size){
     comm_data cds;
     cds.out_req = (MPI_Request**) malloc((net->npp)*sizeof(MPI_Request*));
     cds.in_req = (MPI_Request**) malloc((net->npp)*sizeof(MPI_Request*));
-    int max_deg=0;
+    cds.max_deg=0;
 
     cds.out_bi = vector<vector<int>>(net->npp);
     cds.in_bi = vector<vector<int>>(net->npp);  
@@ -432,7 +424,7 @@ void async_pr(resgraph *net,int rank,int size){
     }
 
     for (int v=0; v<net->npp; v++){
-        max_deg = max(max(max_deg, net->odeg[v]),net->ideg[v]);
+        cds.max_deg = max(max(cds.max_deg, net->odeg[v]),net->ideg[v]);
         cds.out_req[v] = (MPI_Request*) malloc((net->odeg[v])*sizeof(MPI_Request));
         cds.in_req[v] = (MPI_Request*) malloc((net->ideg[v])*sizeof(MPI_Request));
         for (int i=0; i<net->odeg[v]; i++){
@@ -454,109 +446,139 @@ void async_pr(resgraph *net,int rank,int size){
     for (int i =0; i<cds.buff_size; i++){
         cds.avail.push(i);
     }
-    cds.arr_of_inds = (int*) malloc(max_deg*sizeof(int));
+    cds.arr_of_inds = (int*) malloc(cds.max_deg*sizeof(int));
+    return cds;
+}
+
+/*
+ * Asynchronous implementation, as described in Goldberg & Tarjan
+ */
+void async_pr(resgraph *net, comm_data *cd, int rank,int size){
+    int gl_w,v,z,loc_w; // verts
+    z=0;
+    int tally=0;
+    int r,c,ch,e,d_p,dw; // p-r vars
+    int j,bi,tst; // comm vars
     
-    bool is_done[size];
-    for (int i=0; i<size; i++){
-        is_done[i]=0;
-    }
+    bool done = 0;
 
     // start actual algo
     bool win;
-    while (!(net->active.empty())) {
-        v = net->active.front();
-        net->active.pop();
-        
-        // check up on all pending communication to forward nodes
-        check_comm(net,v, &cds, rank,size);
 
-        for (int i=0; i<net->odeg[v]; i++){
-            listen(net,&cds,rank,size);
-            listen_distance(net,&cds,rank,size);
-            gl_w = net->adj[v][3*i];
-            dw = net->adj_d[v][i];
-            c = net->adj[v][3*i+1];
-            r = c - net->aflow[v][i];
-            e = net->ex[v];
-            ch = min(e,r);
-            win = w_in(gl_w,net->npp);
-            if ((r>0) && (net->hght[v] == dw+1)) {
-                if (win){
-                    loc_w = gl_w-rank*(net->std_npp);
-                    net->aflow[v][i] += ch;
-                    net->bflow[loc_w][net->adj[v][3*i+2]/3] -= ch;
-                    net->ex[v] -= ch;
-                    net->ex[loc_w] += ch;
-                } else {
-                    while ((cds.out_flag[v][i] != NOTHING)|| (cds.avail.empty())){
-                        MPI_Test(&(cds.out_req[v][i]), &tst, MPI_STATUS_IGNORE);
-                        if (tst){
-                            handle_comm(net,v,gl_w, &(net->aflow[v][i]), &(net->adj_d[v][i]), &(cds.out_req[v][i]), &(cds.out_bi[v][i]), &(cds.out_flag[v][i]), cds.buff[bi], &(cds.avail), &cds, rank,size);
-                        } else {
-                            // check comm backlog while we wait!
-                            check_comm(net, z, &cds, rank,size);
-                            listen(net,&cds,rank,size);
-                            z = (z+1)%(net->npp);
+    while (!done){
+        while (!(net->active.empty())) {
+            v = net->active.front();
+            net->active.pop();
+            
+            // check up on all pending communication to forward nodes
+            check_comm(net,v, cd, rank,size);
+
+            for (int i=0; i<net->odeg[v]; i++){
+                listen(net,cd,rank,size);
+                listen_distance(net,cd,rank,size);
+                gl_w = net->adj[v][3*i];
+                dw = net->adj_d[v][i];
+                c = net->adj[v][3*i+1];
+                r = c - net->aflow[v][i];
+                e = net->ex[v];
+                ch = min(e,r);
+                win = w_in(gl_w,net->npp);
+                if ((r>0) && (net->hght[v] == dw+1)) {
+                    if (win){
+                        loc_w = gl_w-rank*(net->std_npp);
+                        net->aflow[v][i] += ch;
+                        net->bflow[loc_w][net->adj[v][3*i+2]/3] -= ch;
+                        net->ex[v] -= ch;
+                        net->ex[loc_w] += ch;
+                    } else {
+                        while ((cd->out_flag[v][i] != NOTHING)|| (cd->avail.empty())){
+                            MPI_Test(&(cd->out_req[v][i]), &tst, MPI_STATUS_IGNORE);
+                            if (tst){
+                                handle_comm(net,v,gl_w, &(net->aflow[v][i]), &(net->adj_d[v][i]), &(cd->out_req[v][i]), &(cd->out_bi[v][i]), &(cd->out_flag[v][i]), cd->buff[bi], &(cd->avail),  cd , rank,size);
+                            } else {
+                                // check comm backlog while we wait!
+                                check_comm(net, z,  cd , rank,size);
+                                listen(net, cd ,rank,size);
+                                z = (z+1)%(net->npp);
+                            }
                         }
+                        bi = cd->avail.front();
+                        cd->avail.pop();
+                        cd->buff[bi][0] = v+rank*net->std_npp;
+                        cd->buff[bi][1] = ch;
+                        cd->buff[bi][2] = net->hght[v];
+                        cd->buff[bi][3] = gl_w;
+                        cd->buff[bi][4] = net->adj[v][3*i+2]; 
+                        MPI_Isend(cd->buff[bi], 5, MPI_INT, gl_w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cd->out_req[v][i]));
+                        cd->out_bi[v][i] = bi;
+                        cd->out_flag[v][i] = 4; // 100 (send query fwd)
                     }
-                    bi = cds.avail.front();
-                    cds.avail.pop();
-                    cds.buff[bi][0] = v+rank*net->std_npp;
-                    cds.buff[bi][1] = ch;
-                    cds.buff[bi][2] = net->hght[v];
-                    cds.buff[bi][3] = gl_w;
-                    cds.buff[bi][4] = net->adj[v][3*i+2]; 
-                    MPI_Isend(cds.buff[bi], 5, MPI_INT, gl_w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cds.out_req[v][i]));
-                    cds.out_bi[v][i] = bi;
-                    cds.out_flag[v][i] = 4; // 100 (send query fwd)
                 }
             }
-        }
-        
-        for (int i=0; i<net->ideg[v]; i++){
-            listen(net,&cds,rank,size);
-            listen_distance(net,&cds,rank,size);
-            gl_w = net->badj[v][2*i];
-            dw = net->badj_d[v][i];
-            r = 0 - net->aflow[v][i];
-            e = net->ex[v];
-            ch = min(e,r);
-            win = w_in(gl_w,net->npp);
-            if ((r>0) && (net->hght[v] == dw+1)) {
-                if (win){
-                    loc_w = gl_w-rank*(net->std_npp);
-                    net->bflow[v][i] += ch;
-                    net->aflow[loc_w][net->badj[v][2*i+1]/2] -= ch;
-                    net->ex[v] -= ch;
-                    net->ex[loc_w] += ch;
-                } else {
-                    while ((cds.in_flag[v][i] != NOTHING)|| (cds.avail.empty())){
-                        MPI_Test(&(cds.in_req[v][i]), &tst, MPI_STATUS_IGNORE);
-                        if (tst){
-                            handle_comm(net,v,gl_w, &(net->bflow[v][i]), &(net->adj_d[v][i]), &(cds.in_req[v][i]), &(cds.in_bi[v][i]), &(cds.in_flag[v][i]), cds.buff[bi], &(cds.avail), &cds, rank,size);
-                        } else {
-                            // check comm backlog while we wait!
-                            check_comm(net, z, &cds, rank,size);
-                            listen(net,&cds,rank,size);
-                            z = (z+1)%(net->npp);
+            
+            for (int i=0; i<net->ideg[v]; i++){
+                listen(net, cd ,rank,size);
+                listen_distance(net, cd ,rank,size);
+                gl_w = net->badj[v][2*i];
+                dw = net->badj_d[v][i];
+                r = 0 - net->aflow[v][i];
+                e = net->ex[v];
+                ch = min(e,r);
+                win = w_in(gl_w,net->npp);
+                if ((r>0) && (net->hght[v] == dw+1)) {
+                    if (win){
+                        loc_w = gl_w-rank*(net->std_npp);
+                        net->bflow[v][i] += ch;
+                        net->aflow[loc_w][net->badj[v][2*i+1]/2] -= ch;
+                        net->ex[v] -= ch;
+                        net->ex[loc_w] += ch;
+                    } else {
+                        while ((cd->in_flag[v][i] != NOTHING)|| (cd->avail.empty())){
+                            MPI_Test(&(cd->in_req[v][i]), &tst, MPI_STATUS_IGNORE);
+                            if (tst){
+                                handle_comm(net,v,gl_w, &(net->bflow[v][i]), &(net->adj_d[v][i]), &(cd->in_req[v][i]), &(cd->in_bi[v][i]), &(cd->in_flag[v][i]), cd->buff[bi], &(cd->avail),  cd , rank,size);
+                            } else {
+                                // check comm backlog while we wait!
+                                check_comm(net, z,  cd , rank,size);
+                                listen(net, cd ,rank,size);
+                                z = (z+1)%(net->npp);
+                            }
                         }
+                        bi = cd->avail.front();
+                        cd->avail.pop();
+                        cd->buff[bi][0] = v+rank*net->std_npp;
+                        cd->buff[bi][1] = ch;
+                        cd->buff[bi][2] = net->hght[v];
+                        cd->buff[bi][3] = gl_w;
+                        cd->buff[bi][4] = net->badj[v][2*i+1]; 
+                        MPI_Isend(cd->buff[bi], 5, MPI_INT, gl_w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cd->in_req[v][i]));
+                        cd->in_bi[v][i] = bi;
+                        cd->in_flag[v][i] = 4; // 100 (send query fwd)
                     }
-                    bi = cds.avail.front();
-                    cds.avail.pop();
-                    cds.buff[bi][0] = v+rank*net->std_npp;
-                    cds.buff[bi][1] = ch;
-                    cds.buff[bi][2] = net->hght[v];
-                    cds.buff[bi][3] = gl_w;
-                    cds.buff[bi][4] = net->badj[v][2*i+1]; 
-                    MPI_Isend(cds.buff[bi], 5, MPI_INT, gl_w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cds.in_req[v][i]));
-                    cds.in_bi[v][i] = bi;
-                    cds.in_flag[v][i] = 4; // 100 (send query fwd)
                 }
             }
+            if (net->ex[v] >0){
+                net->active.push(v);
+            }
         }
-        if (net->ex[v] >0){
-            net->active.push(v);
+
+        listen(net,cd,rank,size);
+        listen_distance(net,cd,rank,size);
+        for (int v=0; v<net->npp; v++){
+            MPI_Waitall(net->odeg[v], cd->out_req[v], MPI_STATUSES_IGNORE);
+            for (int i=0; i<net->odeg[v]; i++){
+                gl_w = net->adj[v][3*i];
+                handle_comm(net,v,gl_w, &(net->aflow[v][i]), &(net->adj_d[v][i]), &(cd->out_req[v][i]), &(cd->out_bi[v][i]), &(cd->out_flag[v][i]), cd->buff[cd->out_bi[v][i]], &(cd->avail), cd, rank,size);
+            }
+            MPI_Waitall(net->ideg[v], cd->in_req[v], MPI_STATUSES_IGNORE);
+            for (int i=0; i<net->ideg[v]; i++){
+                gl_w = net->badj[v][2*i];
+                handle_comm(net,v,gl_w, &(net->bflow[v][i]), &(net->badj_d[v][i]), &(cd->in_req[v][i]), &(cd->in_bi[v][i]), &(cd->in_flag[v][i]), cd->buff[cd->in_bi[v][i]], &(cd->avail), cd, rank,size);
+            }
         }
+
+        done = (net->active.empty())? true : false;
+        MPI_Allreduce(MPI_IN_PLACE, &done, 1, MPI_CXX_BOOL, MPI_LAND, MPI_COMM_WORLD);
     }
 }
 
