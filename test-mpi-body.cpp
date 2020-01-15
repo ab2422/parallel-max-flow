@@ -76,7 +76,6 @@ TEST_CASE("Parser: serial basic net test", "[1proc]"){
 
 
 TEST_CASE("Parser: parallel basic net test", "[2proc]"){
-    printf("starting parser test\n");
     int rank;
     int size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);

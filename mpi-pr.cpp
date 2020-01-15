@@ -455,6 +455,11 @@ void async_pr(resgraph *net,int rank,int size){
         cds.avail.push(i);
     }
     cds.arr_of_inds = (int*) malloc(max_deg*sizeof(int));
+    
+    bool is_done[size];
+    for (int i=0; i<size; i++){
+        is_done[i]=0;
+    }
 
     // start actual algo
     bool win;
