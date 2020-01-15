@@ -461,7 +461,8 @@ TEST_CASE("COMPLETE: basic net test", "[2proc]"){
     string file = ((string) DPREFIX) + ((string) "basic-net.max");
     network ntwk = parse(file,rank,size);
     resgraph net = setup(&ntwk,rank,size);
-    async_pr(&net, rank, size);
+    comm_data cds = setup_cd(&net,rank,size);
+    async_pr(&net, &cds, rank, size);
 
     SECTION("check forward flows"){
         if (rank==0){
