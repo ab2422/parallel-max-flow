@@ -23,7 +23,8 @@ void check_dist(resgraph *net, int v, comm_data *cd, int rank, int size);
 /*
  * Handles "planned" communication from local v to global gl_w, 
  * which corresponds to edge in direction dir (1=bwd, 0=fwd)
- * s.t. j is w's location in adj[dir[v].
+ * s.t. j is w's location in adj[dir][v]/2 (i.e. the index used
+ *      for indexing into the edge, flow, etc, arrays).
  */
 void handle_comm(resgraph *net, int v, int gl_w, int dir, int j, comm_data *cd, int rank, int size); 
 

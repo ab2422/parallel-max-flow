@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <vector>
 #include <string>
+#include <unistd.h>
 #include "mpi-data.h"
 #include "mpi-pr.h"
 #include "mpi-comm.h"
@@ -34,6 +35,7 @@ comm_data cds = setup_cd(&graph, rank, size);
 async_pr(&graph, &cds, rank,size);
 
 double end = MPI_Wtime();
+double total = end-start;
 
 //while (graph.n_act > 0){
 //    pulse(&graph);
@@ -41,7 +43,7 @@ double end = MPI_Wtime();
 
 //output(graph, outfile, total);
 
-printf("Elapsed time: %f sec on processor %d\n", end-start, rank);
+printf("Elapsed time: %f sec on processor %d\n", rank);
 
 cleanup(&graph,&net);
 
@@ -51,6 +53,9 @@ cleanup(&graph,&net);
 
 MPI_Finalize();
 
+sleep(2);
+
+output(graph, outfile, total);
 
 return 0;
 

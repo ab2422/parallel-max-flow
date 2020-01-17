@@ -128,7 +128,7 @@ TEST_CASE("Parser: parallel basic net test", "[2proc]"){
             //REQUIRE(((net.adj[0][1]==vector<int>({3,5,4, 5}) ) || (net.adj[0][0] == vector<int>({4, 5,3,5}))));
             //REQUIRE(((net.adj[0][2]==vector<int>({3,5,4, 5}) ) || (net.adj[0][0] == vector<int>({4, 5,3,5}))));
         } else {
-            REQUIRE(((net.adj[0][0][0]==5) && (net.adj[0][1][1]==0)));
+            REQUIRE(((net.adj[0][0][0]==5) && (net.adj[0][0][1]==0)));
             REQUIRE(((net.adj[0][1][0]==5) && (net.adj[0][1][1]==2)));
             REQUIRE(net.adj[0][2]==vector<int>({}));
         }
@@ -239,7 +239,7 @@ TEST_CASE("SETUP: parallel basic net test", "[2proc]"){
         REQUIRE(net.ideg == graph.ideg);
         for (int v=0; v<graph.npp; v++){
             REQUIRE(net.adj[0][v] == graph.adj[0][v]);
-            REQUIRE(net.adj[1][0][v] == graph.adj[1][0][v]);
+            REQUIRE(net.adj[1][v] == graph.adj[1][v]);
         }
     }
     

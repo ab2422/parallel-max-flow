@@ -17,7 +17,7 @@ void check_dist(resgraph *net, int v, comm_data *cd, int rank, int size){
     int w,dw,z;
     z = 2*net->npp/3;
     int dv = net->hght[v];
-    if ( (net->ex[v]>0) && (v!=net->src) && (v!=net->sink) ){
+    if ( (net->ex[v]>0) && (!is_src_loc(net,v,rank,size)) && (!is_sink_loc(net,v,rank,size)) ){
         for (int i=0; i<net->odeg[v]; i++){
             if (net->cap[v][i] - net->flow[0][v][i] >0) {
                 dw = net->adj_d[0][v][i];
@@ -294,7 +294,7 @@ void check_comm_helper(resgraph *net, int v, int dir, int incount, int arr_of_in
             j = arr_of_inds[i];
             bi = cd->edge_bi[dir][v][j]; //what buffer are we using?
             w = net->adj[dir][v][2*j];
-            handle_comm(net, v, w, dir, 2*j, cd, rank,size);
+            handle_comm(net, v, w, dir, j, cd, rank,size);
         }
     }
 

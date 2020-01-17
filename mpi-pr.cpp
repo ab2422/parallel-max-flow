@@ -47,7 +47,6 @@ Parses a file filename provided in DIMACS netflow format.
 * To ensure zero indexing, shifts indices in file all down by one
 */
 network parse(string filename, int rank, int size){
-    printf("starting parse\n");
     network net;
     string line;
     ifstream file;
@@ -138,12 +137,12 @@ network parse(string filename, int rank, int size){
                 if (((rank*npp)<=v) && (v < (rank+1)*npp)){
                     net.odeg[v-rank*npp]++;
                     jv = net.adj[0][v-rank*npp].size();
+                    net.cap[v-rank*npp].push_back(cap);
                     if (win) {
                         net.ideg[w-rank*npp]++;
                         jw = net.adj[1][w-rank*npp].size();
                         net.adj[0][v-rank*npp].push_back(w); // adj vert
                         net.adj[0][v-rank*npp].push_back(jw); //jw = v pos in w list
-                        net.cap[v-rank*npp].push_back(cap);
         
                         net.adj[1][w-rank*npp].push_back(v); // bacwards edge
                         net.adj[1][w-rank*npp].push_back(jv); //jv = w pos in v list
@@ -154,7 +153,6 @@ network parse(string filename, int rank, int size){
                         sbuf = jv;
                         MPI_Isend(&sbuf, 1, MPI_INT, w/npp, v*net.n + w, MPI_COMM_WORLD,&sreq);
                         net.adj[0][v-rank*npp].push_back(w);
-                        net.cap[v-rank*npp].push_back(cap);
                         // wait for curr rec to finish, so can use data
                         MPI_Wait(&rreq, &rstat);
                         net.adj[0][v-rank*npp].push_back(rbuf); 
@@ -212,6 +210,7 @@ resgraph setup(network *inet, int rank, int size){
     onet.ideg = inet->ideg;
 
     onet.adj = inet->adj;
+    onet.cap = inet->cap;
     onet.ex = (int*) malloc(onet.npp*sizeof(int));
     onet.dex = (int*) malloc(onet.npp * sizeof(int));
     onet.hght = (int*) malloc(onet.npp * sizeof(int));
@@ -499,14 +498,12 @@ void print_queue(queue<int> *q, int rank, int size){
  * Asynchronous implementation, as described in Goldberg & Tarjan
  */
 void async_pr(resgraph *net, comm_data *cd, int rank,int size){
-    wait_for_debugger();
     int gl_w,v,z,loc_w; // verts
     z=0;
     int tally=0;
     int r,c,ch,e,d_p,dw; // p-r vars
     int j,bi,tst; // comm vars
 
-    bool done = 0;
     bool all_done=0;
     MPI_Request done_req=MPI_REQUEST_NULL;
     int progress = 1;
@@ -552,7 +549,7 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                             while ( (cd->avail.empty())){
                                 MPI_Test(&(cd->edge_req[0][v][i]), &tst, MPI_STATUS_IGNORE);
                                 if (tst){
-                                    handle_comm(net,v,gl_w, 0, 2*i, cd,rank,size);
+                                    handle_comm(net,v,gl_w, 0, i, cd,rank,size);
                                 } else {
                                     // check comm backlog while we wait!
                                     check_comm(net, z,  cd , rank,size);
@@ -561,6 +558,10 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                                 }
                             }
                             progress++;
+                            loc_w = gl_w-rank*(net->std_npp);
+                            net->flow[0][v][i] += ch;
+                            net->ex[v] -= ch;
+
                             bi = cd->avail.front();
                             cd->avail.pop();
                             cd->buff[bi][0] = v+rank*net->std_npp;
@@ -591,8 +592,8 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                     if (win){
                         progress++;
                         loc_w = gl_w-rank*(net->std_npp);
-                        net->flow[0][v][i] += ch;
-                        net->flow[1][loc_w][net->adj[1][v][2*i+1]/2] -= ch;
+                        net->flow[1][v][i] += ch;
+                        net->flow[0][loc_w][net->adj[1][v][2*i+1]/2] -= ch;
                         net->ex[v] -= ch;
                         net->ex[loc_w] += ch;
                     } else {
@@ -600,7 +601,7 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                             while ((cd->avail.empty())){
                                 MPI_Test(&(cd->edge_req[1][v][i]), &tst, MPI_STATUS_IGNORE);
                                 if (tst){
-                                    handle_comm(net,v,gl_w, 1, 2*i, cd,rank,size);
+                                    handle_comm(net,v,gl_w, 1, i, cd,rank,size);
                                 } else {
                                     // check comm backlog while we wait!
                                     check_comm(net, z,  cd , rank,size);
@@ -609,6 +610,9 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                                 }
                             }
                             progress++;
+                            net->flow[1][v][i] += ch;
+                            net->ex[v] -= ch;
+
                             bi = cd->avail.front();
                             cd->avail.pop();
                             cd->buff[bi][0] = v+rank*net->std_npp;
@@ -656,9 +660,9 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                 }
             }
         }
-        done = 1;
+        all_done = 1;
         for (int i=0; i<size; i++){
-            done = (done && cd->proc_done[i]); 
+            all_done = (all_done && cd->proc_done[i]); 
         }
 
         progress = 1;
