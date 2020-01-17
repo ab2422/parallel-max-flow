@@ -441,10 +441,11 @@ comm_data setup_cd(resgraph *net, int rank, int size){
 
     for (int v=0; v<net->npp; v++){
         cds.max_deg = max(max(cds.max_deg, net->odeg[v]),net->ideg[v]);
-        for (int dir=0; dir<2; dir++){
-            cds.edge_req[dir][v] = (MPI_Request*) malloc((net->odeg[v])*sizeof(MPI_Request));
-            cds.dist_req[dir][v] = (MPI_Request*) malloc((net->odeg[v])*sizeof(MPI_Request));
-        }
+        cds.edge_req[0][v] = (MPI_Request*) malloc((net->odeg[v])*sizeof(MPI_Request));
+        cds.dist_req[0][v] = (MPI_Request*) malloc((net->odeg[v])*sizeof(MPI_Request));
+        cds.edge_req[1][v] = (MPI_Request*) malloc((net->ideg[v])*sizeof(MPI_Request));
+        cds.dist_req[1][v] = (MPI_Request*) malloc((net->ideg[v])*sizeof(MPI_Request));
+
         for (int i=0; i<net->odeg[v]; i++){
             cds.edge_req[0][v][i] = (MPI_REQUEST_NULL);
             cds.edge_flag[0][v].push_back(NOTHING);
