@@ -236,11 +236,19 @@ TEST_CASE("SETUP: parallel basic net test", "[2proc]"){
     }
     
     SECTION("excess"){
+        int v,w;
         if (rank==0){
             REQUIRE(graph.n_act == 2);
             REQUIRE(graph.ex[0] == 0);
             REQUIRE(graph.ex[1] == 5);
             REQUIRE(graph.ex[2] == 15);
+
+            REQUIRE(graph.active.size() == 2);
+            v = graph.active.front();
+            graph.active.pop();
+            w = graph.active.front();
+            REQUIRE( (( (v==1)&&(w==2) )  ||  ( (v==2)&&(w==1) )) );
+            
         } else {
             REQUIRE(graph.n_act == 0);
             REQUIRE(graph.ex[0] == 0);

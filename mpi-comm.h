@@ -22,14 +22,22 @@ void check_dist(resgraph *net, int v, comm_data *cd, int rank, int size);
 
 void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Request *req,  int *bi, unsigned char *flagv, int buffi[], std::queue<int> *avail, comm_data *cd, int rank, int size);
 
-void check_comm_helper(resgraph *net, int v, std::vector<int> *flowv, std::vector<int> *adj_dv, MPI_Request *reqv, std::vector<int> *arr_biv, std::vector<unsigned char> *arr_flagv, int **buff, std::queue<int> *avail, int arr_of_inds[], comm_data *cd, int rank, int size);
+void check_comm_helper(resgraph *net, int v, int incount, std::vector<int> *flowv, std::vector<int> *adjv, std::vector<int> *adj_dv, MPI_Request *reqv, std::vector<int> *arr_biv, std::vector<unsigned char> *arr_flagv, int **buff, std::queue<int> *avail, int arr_of_inds[], comm_data *cd, int rank, int size);
 
 /*
  * Checks status of all pending communications, and if completed, processes them
  */ 
 void check_comm(resgraph *net, int v, comm_data *cd,int rank, int size);
 
-void listen_helper(resgraph *net, comm_data *cd, int bi, std::vector<std::vector<int>> *flow, std::vector<std::vector<int>> *adj, std::vector<std::vector<unsigned char>> *flagarr, int sc, MPI_Request **req, unsigned char **flagv_pt, int rank, int size);
+/*
+ * Helps the listener function.
+ */
+void listen_helper(resgraph *net, comm_data *cd, int bi, std::vector<std::vector<int>> *flow, std::vector<std::vector<int>> *adj, std::vector<std::vector<unsigned char>> *flagarr, int sc, MPI_Request ***reqarr, MPI_Request **req, unsigned char **flagv_pt, int *k, int rank, int size);
+
+/*
+ * Listens to see if any processors have finished.
+ */
+void listen_finish(resgraph *net, comm_data *cd, int rank, int size);
 
 /*
  * Listens for incoming distance updates & processes them.

@@ -2,6 +2,7 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <vector>
+#include <string>
 #include "mpi-data.h"
 #include "mpi-pr.h"
 #include "mpi-comm.h"
@@ -38,12 +39,9 @@ double end = MPI_Wtime();
 //    pulse(&graph);
 //}
 
-//double end = omp_get_wtime();
-//double total = end - start;
 //output(graph, outfile, total);
 
-//cout << "Elapsed time: " << total << endl;
-printf("Elapsed time: %d sec on processor %d\n", end-start, rank);
+printf("Elapsed time: %f sec on processor %d\n", end-start, rank);
 
 cleanup(&graph,&net);
 

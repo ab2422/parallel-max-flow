@@ -16,11 +16,14 @@ struct network {
     int *ideg; // array of in degs
     // adj[v] = {w_1, c(v,w_1), j_1, w_2, c(v,w_2), j_2 ...} 
     //          for w_i adj to v, where j_i is ind of v in w's badj list
-    std::vector<std::vector<int>> adj; 
+    std::vector<std::vector<std::vector<int>>> adj; 
     // badj[w] = {v_1, j_1, v_2, j_2, ...} for w adj to v_i, j_i ind of v
     std::vector<std::vector<int>> badj;
     // each proc stores ceil( n/size ) vertices. So, if n = 100, size = 10, rk p = 1, then it stores
     // verts 10-19, and to access vert 12, use adj[2], badj[2]. The adj list holds actual vert #s.
+    
+    //holds capacities
+    std::vector<std::vector<int>> cap;
 };
 
 struct resgraph : public network {
@@ -62,10 +65,17 @@ struct comm_data {
     std::vector<std::vector<unsigned char>> out_flag;
     std::vector<std::vector<unsigned char>> in_flag;
 
-    // for query receives & distance comm: one for every proc
-    MPI_Request *dist_req;
+    // fordistance comm: one for every edge
+    MPI_Request **out_dist_req;
+    MPI_Request **in_dist_req;
+    std::vector<std::vector<int>> out_dist_bi;
+    std::vector<std::vector<int>> in_dist_bi;
 
-    // for both
+    // for completion checking comm: one for each proc
+    MPI_Request *fin_req;
+    bool *proc_done;
+
+    // for all
     int buff_size;
     int **buff;
     std::queue<int> avail;

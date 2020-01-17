@@ -8,11 +8,12 @@
 #include "mpi-data.h"
 
 // in binary order, our tags
-#define FWD_QUERY 123
-#define BWD_QUERY 125
-#define FWD_RESPONSE 124
-#define BWD_RESPONSE 126
+#define FWD_QUERY 100
+#define BWD_QUERY 105
+#define FWD_RESPONSE 110
+#define BWD_RESPONSE 115
 #define DIST_UPDATE 300
+#define FINISH 250
 // REQUIRE: NOTHING >= 16
 #define NOTHING 32
 
@@ -20,6 +21,9 @@
 //                               d_2 = send/receive,  
 //                               d_1 = response/query,
 //                               d_0 = bwd/fwd (where 1/0).
+#define AFF_RCV_QRY_FWD 0
+
+
 
 
 bool is_src_loc(resgraph *net, int loc_v, int rank, int size);
