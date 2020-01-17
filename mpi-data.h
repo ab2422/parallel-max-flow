@@ -52,7 +52,6 @@ struct comm_data {
     // for send requests: one for every edge
     MPI_Request ***edge_req;
     std::vector<std::vector<std::vector<int>>> edge_bi;
-    std::vector<std::vector<std::vector<int>>> dist_bi;
     // OUT_FLAG[V][I] ==  nothing WHEN (V,NET->ADJ[3*I]) HAS NO PENDING OPERATIONS
     // == 0 WHEN PENDING A SENT QUERY, == 1 FOR REC QUERY
     // == 2 FOR SENT RESPONSE, == 3 FOR REC RESPONSE

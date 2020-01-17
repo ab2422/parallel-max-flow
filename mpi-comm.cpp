@@ -5,6 +5,8 @@
 #include <queue>
 #include "mpi-comm.h"
 #include "mpi-pr.h"
+//#define NDEBUG
+#include <assert.h>
 using namespace std;
 
 #define w_in(w,npp) ( (rank*(npp) <= (w)) && ((w) < ((rank+1)*(npp))) )
@@ -45,7 +47,7 @@ void check_dist(resgraph *net, int v, comm_data *cd, int rank, int size){
         for (int i=0; i<net->odeg[v]; i++){
             w = net->adj[0][v][2*i];
             loc_w = w - rank*net->std_npp;
-            j = net->adj[v][2*i+1];
+            j = net->adj[0][v][2*i+1];
             win = w_in(w,net->std_npp);
             if (win) {
                 net->adj_d[1][loc_w][j/2];
@@ -103,29 +105,29 @@ void check_dist(resgraph *net, int v, comm_data *cd, int rank, int size){
 
 void handle_comm(resgraph *net, int v, int gl_w, int dir, int j, comm_data *cd, int rank, int size){ 
     int bi = cd->edge_bi[dir][v][j];
-    if (net->edge_flag[dir][v][j] == NOTHING){
+    if (cd->edge_flag[dir][v][j] == NOTHING){
         // do nothing!
-    } else if ( (((net->edge_flag[dir][v][j])/2)%2 == 0) && ( (net->edge_flag[dir][v][j])/8 == 0) ){
+    } else if ( (((cd->edge_flag[dir][v][j])/2)%2 == 0) && ( (cd->edge_flag[dir][v][j])/8 == 0) ){
         // just finished query
-        if ( (net->edge_flag[dir][v][j])/4 ==0) {
+        if ( (cd->edge_flag[dir][v][j])/4 ==0) {
             //just finished receiving query 
             printf("Error! Shouldn't be waiting to receive query\n");
         } else{
             // just finished sending query, wait for response
-            if ((net->edge_flag[dir][v][j])%2 == 0) {
+            if ((cd->edge_flag[dir][v][j])%2 == 0) {
                 assert (dir==0);
-                MPI_Irecv(buffi,5,MPI_INT,gl_w/net->std_npp,FWD_RESPONSE,MPI_COMM_WORLD, &(cd->edge_req[dir][v][j]);
-                (net->edge_flag[dir][v][j]) = 2; // 010 (receive response fwd)
+                MPI_Irecv(cd->buff[bi],5,MPI_INT,gl_w/net->std_npp,FWD_RESPONSE,MPI_COMM_WORLD, &(cd->edge_req[dir][v][j]));
+                (cd->edge_flag[dir][v][j]) = 2; // 010 (receive response fwd)
                 // use same buff to receive response
             } else {
                 assert (dir==1);
-                MPI_Irecv(buffi,5,MPI_INT,gl_w/net->std_npp,BWD_RESPONSE,MPI_COMM_WORLD, &(cd->edge_req[dir][v][j]));
-                (net->edge_flag[dir][v][j]) = 3; // 011 (receive response bwd)
+                MPI_Irecv(cd->buff[bi],5,MPI_INT,gl_w/net->std_npp,BWD_RESPONSE,MPI_COMM_WORLD, &(cd->edge_req[dir][v][j]));
+                (cd->edge_flag[dir][v][j]) = 3; // 011 (receive response bwd)
             }
         }
-    } else if ( (((net->edge_flag[dir][v][j])/2)%2 == 1) && ( (net->edge_flag[dir][v][j])/8 == 0)){
+    } else if ( (((cd->edge_flag[dir][v][j])/2)%2 == 1) && ( (cd->edge_flag[dir][v][j])/8 == 0)){
         // just finished response
-        if (((net->edge_flag[dir][v][j])/4 == 0)&&(cd->buff[bi][0]==0)){
+        if (((cd->edge_flag[dir][v][j])/4 == 0)&&(cd->buff[bi][0]==0)){
             // done receiving response: rejected
             if ((net->ex[v] == 0) && (cd->buff[bi][2]>0) && (!is_src_loc(net,v,rank,size)) && (!is_sink_loc(net, v,rank,size))){
                 net->active.push(v);
@@ -136,16 +138,16 @@ void handle_comm(resgraph *net, int v, int gl_w, int dir, int j, comm_data *cd, 
             check_dist(net,v,cd,rank,size);
         }
         // cleanup
-        (net->edge_flag[dir][v][j]) = NOTHING;
+        (cd->edge_flag[dir][v][j]) = NOTHING;
         cd->avail.push(bi);
         cd->edge_bi[dir][v][j] = -1;
-    } else if ( ((net->edge_flag[dir][v][j])/8 == 1) && ( (net->edge_flag[dir][v][j])/4 == 1) ){
+    } else if ( ((cd->edge_flag[dir][v][j])/8 == 1) && ( (cd->edge_flag[dir][v][j])/4 == 1) ){
         // finished sending distance update
-        (net->edge_flag[dir][v][j]) = NOTHING;
+        (cd->edge_flag[dir][v][j]) = NOTHING;
         cd->avail.push(bi);
         cd->edge_bi[dir][v][j]=-1;
     } else {
-        printf("Invalid flag! Flag was %d\n", (net->edge_flag[dir][v][j]));
+        printf("Invalid flag! Flag was %d\n", (cd->edge_flag[dir][v][j]));
     }
 }
 
@@ -175,8 +177,8 @@ void listen_helper(resgraph *net, comm_data *cd, int bi, int dir, MPI_Request **
     cd->buff[bi][2] = ch;
     cd->buff[bi][3] = net->hght[loc_w];
     cd->buff[bi][4] = net->adj[dir][loc_w][i+1]; 
-    *req_ptr = &(net->edge_req[dir][loc_w][i/2]);
-    *flagv_ptr = &(net->edge_flag[dir][loc_w][i/2]);
+    *req_ptr = &(cd->edge_req[dir][loc_w][i/2]);
+    *flagv_ptr = &(cd->edge_flag[dir][loc_w][i/2]);
     cd->edge_bi[dir][loc_w][i/2] = bi;
 }
 
@@ -285,7 +287,7 @@ void listen(resgraph *net, comm_data *cd, int rank, int size){
 void check_comm_helper(resgraph *net, int v, int dir, int incount, int arr_of_inds[], comm_data *cd, int rank, int size){
     int outcount = 0;
     int j, bi, w;
-    MPI_Testsome(incount,cd->edge_req[v], &outcount, arr_of_inds,MPI_STATUSES_IGNORE);
+    MPI_Testsome(incount,cd->edge_req[dir][v], &outcount, arr_of_inds,MPI_STATUSES_IGNORE);
     // remember: aflows are positive & bflows are neg, hence the signs working out!
     if (outcount != MPI_UNDEFINED){
         for (int i=0; i<outcount; i++){

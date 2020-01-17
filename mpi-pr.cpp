@@ -82,11 +82,14 @@ network parse(string filename, int rank, int size){
                     net.m = atoi(&(line[i]));
                     net.odeg = (int*) malloc((net.npp)*sizeof(int));
                     net.ideg = (int*) malloc((net.npp)*sizeof(int));
-                    net.adj = vector<vector<int>>(net.npp);
-                    net.badj = vector<vector<int>>(net.npp);
+                    net.cap = vector<vector<int>>(net.npp);
+                    net.adj = vector<vector<vector<int>>>(2);
+                    net.adj[0].resize(net.npp);
+                    net.adj[1].resize(net.npp);
                     for (int j=0; j<net.npp; j++){
-                        net.adj[j].reserve(4*net.m/(size*net.n)+1);
-                        net.badj[j].reserve(4*net.m/(size*net.n)+1);
+                        net.adj[0][j].reserve(4*net.m/(size*net.n)+1);
+                        net.adj[1][j].reserve(4*net.m/(size*net.n)+1);
+                        net.cap[j].reserve(4*net.m/(size*net.n)+1);
                         net.odeg[j]=0;
                         net.ideg[j]=0;
                     }
@@ -134,40 +137,39 @@ network parse(string filename, int rank, int size){
                 // if vin: 
                 if (((rank*npp)<=v) && (v < (rank+1)*npp)){
                     net.odeg[v-rank*npp]++;
-                    jv = net.adj[v-rank*npp].size();
+                    jv = net.adj[0][v-rank*npp].size();
                     if (win) {
                         net.ideg[w-rank*npp]++;
-                        jw = net.badj[w-rank*npp].size();
-                        net.adj[v-rank*npp].push_back(w); // adj vert
-                        net.adj[v-rank*npp].push_back(cap); // capacity
-                        net.adj[v-rank*npp].push_back(jw); //jw = v pos in w list
+                        jw = net.adj[1][w-rank*npp].size();
+                        net.adj[0][v-rank*npp].push_back(w); // adj vert
+                        net.adj[0][v-rank*npp].push_back(jw); //jw = v pos in w list
+                        net.cap[v-rank*npp].push_back(cap);
         
-                        net.badj[w-rank*npp].push_back(v); // bacwards edge
-                        //net.badj[w].push_back(cap); //cap for back
-                        net.badj[w-rank*npp].push_back(jv); //jv = w pos in v list
+                        net.adj[1][w-rank*npp].push_back(v); // bacwards edge
+                        net.adj[1][w-rank*npp].push_back(jv); //jv = w pos in v list
                     }else{
                         MPI_Irecv(&rbuf,1,MPI_INT, w/npp, v*net.n+w, MPI_COMM_WORLD, &rreq);
                         // wait for prev send to finish, so know sbuf avail
                         MPI_Wait(&sreq, &sstat);
                         sbuf = jv;
                         MPI_Isend(&sbuf, 1, MPI_INT, w/npp, v*net.n + w, MPI_COMM_WORLD,&sreq);
-                        net.adj[v-rank*npp].push_back(w);
-                        net.adj[v-rank*npp].push_back(cap);
+                        net.adj[0][v-rank*npp].push_back(w);
+                        net.cap[v-rank*npp].push_back(cap);
                         // wait for curr rec to finish, so can use data
                         MPI_Wait(&rreq, &rstat);
-                        net.adj[v-rank*npp].push_back(rbuf); 
+                        net.adj[0][v-rank*npp].push_back(rbuf); 
                     }
                 } else if (win) {
                     MPI_Irecv(&rbuf,1,MPI_INT,v/npp, v*net.n+w, MPI_COMM_WORLD, &rreq);
                     net.ideg[w-rank*npp]++;
-                    jw = net.badj[w-rank*npp].size();
-                    net.badj[w-rank*npp].push_back(v);
+                    jw = net.adj[1][w-rank*npp].size();
+                    net.adj[1][w-rank*npp].push_back(v);
                     MPI_Wait(&sreq, &sstat);
                     sbuf = jw;
                     MPI_Isend(&sbuf,1,MPI_INT, v/npp, v*net.n+w, MPI_COMM_WORLD, &rreq);
                     MPI_Wait(&rreq, &rstat);
                     jw = rbuf;
-                    net.badj[w-rank*npp].push_back(rbuf);
+                    net.adj[1][w-rank*npp].push_back(rbuf);
 
                 }
             } else if (line[0]!='c'){
@@ -178,8 +180,9 @@ network parse(string filename, int rank, int size){
     }
 
     for (int j=0; j< (net.npp); j++){ 
-        (net.adj[j]).shrink_to_fit();
-        (net.badj[j]).shrink_to_fit();
+        (net.adj[0][j]).shrink_to_fit();
+        (net.adj[1][j]).shrink_to_fit();
+        net.cap[j].shrink_to_fit();
     }
 
     // deal w/ pending MPI_Sends...
@@ -209,19 +212,17 @@ resgraph setup(network *inet, int rank, int size){
     onet.ideg = inet->ideg;
 
     onet.adj = inet->adj;
-    onet.badj = inet->badj;
     onet.ex = (int*) malloc(onet.npp*sizeof(int));
     onet.dex = (int*) malloc(onet.npp * sizeof(int));
     onet.hght = (int*) malloc(onet.npp * sizeof(int));
     onet.hght_p = (int*) malloc(onet.npp * sizeof(int));
     
-    onet.aflow = vector<vector<int>>(onet.npp);
-    onet.bflow = vector<vector<int>>(onet.npp);
-    //onet.active = vector<int>();
-    //onet.active_p = vector<int>();
-
-    onet.adj_d = vector<vector<int>>(onet.npp);
-    onet.badj_d = vector<vector<int>>(onet.npp);
+    onet.flow = vector<vector<vector<int>>>(2);
+    onet.flow[0].resize(onet.npp);
+    onet.flow[1].resize(onet.npp);
+    onet.adj_d = vector<vector<vector<int>>>(2);
+    onet.adj_d[0].resize(onet.npp);
+    onet.adj_d[1].resize(onet.npp);
 
     //printf("about to loop, proc %d\n", rank);
     for (int v=0; v<onet.npp; v++){
@@ -230,11 +231,11 @@ resgraph setup(network *inet, int rank, int size){
         onet.hght[v]=0;
         onet.hght_p[v]=0;
 
-        onet.aflow[v] = vector<int>(onet.odeg[v], 0);
-        onet.bflow[v] = vector<int>(onet.ideg[v], 0);
+        onet.flow[0][v].resize(onet.odeg[v],0);
+        onet.flow[1][v].resize(onet.ideg[v], 0);
 
-        onet.adj_d[v] = vector<int>(onet.odeg[v],0);
-        onet.badj_d[v] = vector<int>(onet.ideg[v],0);
+        onet.adj_d[0][v].resize(onet.odeg[v],0);
+        onet.adj_d[1][v].resize(onet.ideg[v],0);
     }
 
     int num_sent=0;    
@@ -244,14 +245,14 @@ resgraph setup(network *inet, int rank, int size){
     if (rank == onet.s_proc){
         onet.n_act =0;
         for (int i=0; i<onet.odeg[s]; i++){
-            c = onet.adj[s][3*i+1];
-            w = onet.adj[s][3*i];
+            c = onet.cap[s][i];
+            w = onet.adj[0][s][2*i];
             win = ( (rank*onet.std_npp) <= w ) && (w <((rank+1)*onet.std_npp));
-            onet.aflow[s][i] = c;
+            onet.flow[0][s][i] = c;
             if (win){
-                onet.bflow[w][ onet.adj[s][3*i+2] / 3 ] = -c;
+                onet.flow[1][w][ onet.adj[0][s][2*i+1] / 2 ] = -c;
                 onet.ex[w] = c;
-                onet.badj_d[w][onet.adj[s][3*i+2]/3] = onet.n;
+                onet.adj_d[1][w][onet.adj[0][s][2*i+1]/2] = onet.n;
                 if (w != onet.sink) {
                     onet.n_act += 1;
                     onet.active.push(w);
@@ -278,13 +279,13 @@ resgraph setup(network *inet, int rank, int size){
     int count=0;
     if (rank == onet.s_proc){
         for (int i=0; i<onet.odeg[s]; i++){
-            c = onet.adj[s][3*i+1];
-            w = onet.adj[s][3*i];
+            c = onet.cap[s][i];
+            w = onet.adj[0][s][2*i];
             win = ( (rank*onet.std_npp) <= w ) && (w <((rank+1)*onet.std_npp));
             if (!win) {
                 buffer[3*count] = w;
                 buffer[3*count + 1] = c;
-                buffer[3*count + 2] = onet.adj[s][3*i+2];
+                buffer[3*count + 2] = onet.adj[0][s][3*i+2];
                 count++;
             }
         }
@@ -297,9 +298,9 @@ resgraph setup(network *inet, int rank, int size){
         for (int i=0; i< num_sent; i++){
             w = buffer[3*i];
             c = buffer[3*i+1];
-            onet.bflow[w][buffer[3*i+2]/3] = -c;
+            onet.flow[1][w][buffer[3*i+2]/2] = -c;
             if (!(w_in(w,onet.std_npp))){
-                onet.bflow[w-rank*onet.std_npp][buffer[3*i+2]/3]=-c;
+                onet.flow[1][w-rank*onet.std_npp][buffer[3*i+2]/2]=-c;
                 onet.ex[w-rank*onet.std_npp]=c;
                 if (w != onet.sink){
                     onet.n_act +=1;
@@ -329,6 +330,7 @@ void cleanup(resgraph *net, network *orig){
 /*
  * A single pulse, from algo as described in Goldberg & Tarjan
  */
+/*
 void pulse(resgraph *net_ptr){
     int w,r,ch,e,d_p,dw;
     {
@@ -401,22 +403,20 @@ void pulse(resgraph *net_ptr){
     }
     net_ptr->ex[0] = 0;
 }
+*/
 
 comm_data setup_cd(resgraph *net, int rank, int size){
     comm_data cds;
-    cds.out_req = (MPI_Request**) malloc((net->npp)*sizeof(MPI_Request*));
-    cds.in_req = (MPI_Request**) malloc((net->npp)*sizeof(MPI_Request*));
-    cds.out_dist_req = (MPI_Request**) malloc((net->npp)*sizeof(MPI_Request*));
-    cds.in_dist_req = (MPI_Request**) malloc((net->npp)*sizeof(MPI_Request*));
 
-    cds.max_deg=0;
-
-    cds.out_bi = vector<vector<int>>(net->npp);
-    cds.in_bi = vector<vector<int>>(net->npp);  
-    cds.out_flag = vector<vector<unsigned char>>(net->npp);
-    cds.in_flag = vector<vector<unsigned char>>(net->npp);
-    cds.out_dist_bi = vector<vector<int>>(net->npp);
-    cds.in_dist_bi = vector<vector<int>>(net->npp);
+    cds.edge_bi =   vector<vector<vector<int>>>(2);
+    cds.edge_bi[0].resize(net->npp);
+    cds.edge_bi[1].resize(net->npp);
+    cds.edge_flag = vector<vector<vector<unsigned char>>>(2);
+    cds.edge_flag[0].resize(net->npp);
+    cds.edge_flag[1].resize(net->npp);
+    cds.dist_bi =   vector<vector<vector<int>>>(2);
+    cds.dist_bi[0].resize(net->npp);
+    cds.dist_bi[1].resize(net->npp);
 
     // buffers for send & response to update queries
     // query buff[i] = [v,change,d(v), index]
@@ -430,29 +430,37 @@ comm_data setup_cd(resgraph *net, int rank, int size){
         }
     }
 
+    cds.edge_req = (MPI_Request***) malloc(2*sizeof(MPI_Request**));
+    cds.edge_req[0]= (MPI_Request**) malloc((net->npp)*sizeof(MPI_Request*));
+    cds.edge_req[1]= (MPI_Request**) malloc((net->npp)*sizeof(MPI_Request*));
+
+    cds.dist_req = (MPI_Request***) malloc((2)*sizeof(MPI_Request*));
+    cds.dist_req[0]= (MPI_Request**) malloc((net->npp)*sizeof(MPI_Request*));
+    cds.dist_req[1]= (MPI_Request**) malloc((net->npp)*sizeof(MPI_Request*));
+
+    cds.max_deg=0;
 
     for (int v=0; v<net->npp; v++){
         cds.max_deg = max(max(cds.max_deg, net->odeg[v]),net->ideg[v]);
-        cds.out_req[v] = (MPI_Request*) malloc((net->odeg[v])*sizeof(MPI_Request));
-        cds.in_req[v] = (MPI_Request*) malloc((net->ideg[v])*sizeof(MPI_Request));
-
-        cds.out_dist_req[v] = (MPI_Request*) malloc((net->odeg[v])*sizeof(MPI_Request));
-        cds.in_dist_req[v] = (MPI_Request*) malloc((net->ideg[v])*sizeof(MPI_Request));
-
-        for (int i=0; i<net->odeg[v]; i++){
-            cds.out_req[v][i] = (MPI_REQUEST_NULL);
-            cds.out_flag[v].push_back(NOTHING);
-            cds.out_bi[v].push_back(-1);
-            cds.out_dist_req[v][i] = MPI_REQUEST_NULL;
-            cds.out_dist_bi[v].push_back(-1);
+        for (int dir=0; dir<2; dir++){
+            cds.edge_req[dir][v] = (MPI_Request*) malloc((net->odeg[v])*sizeof(MPI_Request));
+            cds.dist_req[dir][v] = (MPI_Request*) malloc((net->odeg[v])*sizeof(MPI_Request));
         }
+        for (int i=0; i<net->odeg[v]; i++){
+            cds.edge_req[0][v][i] = (MPI_REQUEST_NULL);
+            cds.edge_flag[0][v].push_back(NOTHING);
+            cds.edge_bi[0][v].push_back(-1);
+            cds.dist_req[0][v][i] = MPI_REQUEST_NULL;
+            cds.dist_bi[0][v].push_back(-1);
+        }
+        
 
         for (int i=0; i<net->ideg[v]; i++){
-            cds.in_req[v][i] = MPI_REQUEST_NULL;
-            cds.in_flag[v].push_back(NOTHING);
-            cds.in_bi[v].push_back(-1);
-            cds.in_dist_req[v][i] = MPI_REQUEST_NULL;
-            cds.in_dist_bi[v].push_back(-1);
+            cds.edge_req[1][v][i] = MPI_REQUEST_NULL;
+            cds.edge_flag[1][v].push_back(NOTHING);
+            cds.edge_bi[1][v].push_back(-1);
+            cds.dist_req[1][v][i] = MPI_REQUEST_NULL;
+            cds.dist_bi[1][v].push_back(-1);
         }
         cds.buff[v][0] = 0;
         cds.buff[v][1] = 0;
@@ -520,13 +528,13 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
             listen(net,cd,rank,size);
 
             for (int i=0; i<net->odeg[v]; i++){
-                assert( ( (cd->out_flag[v][i]==NOTHING)&&(cd->out_bi[v][i]==-1) )  ||  ( (cd->out_flag[v][i]!=NOTHING)&&(cd->out_bi[v][i]!=-1)));
+                assert( ( (cd->edge_flag[0][v][i]==NOTHING)&&(cd->edge_bi[0][v][i]==-1) )  ||  ( (cd->edge_flag[1][v][i]!=NOTHING)&&(cd->edge_bi[1][v][i]!=-1)));
                 listen(net,cd,rank,size);
                 listen_distance(net,cd,rank,size);
-                gl_w = net->adj[v][3*i];
-                dw = net->adj_d[v][i];
-                c = net->adj[v][3*i+1];
-                r = c - net->aflow[v][i];
+                gl_w = net->adj[0][v][2*i];
+                dw = net->adj_d[0][v][i];
+                c = net->cap[v][i];
+                r = c - net->flow[0][v][i];
                 e = net->ex[v];
                 ch = min(e,r);
                 win = w_in(gl_w,net->npp);
@@ -535,16 +543,16 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                     if (win){
                         progress++;
                         loc_w = gl_w-rank*(net->std_npp);
-                        net->aflow[v][i] += ch;
-                        net->bflow[loc_w][net->adj[v][3*i+2]/3] -= ch;
+                        net->flow[0][v][i] += ch;
+                        net->flow[1][loc_w][ net->adj[0][v][2*i+1]/2] -= ch;
                         net->ex[v] -= ch;
                         net->ex[loc_w] += ch;
                     } else {
-                        if ( (cd->out_flag[v][i] == NOTHING)){
+                        if ( (cd->edge_flag[0][v][i] == NOTHING)){
                             while ( (cd->avail.empty())){
-                                MPI_Test(&(cd->out_req[v][i]), &tst, MPI_STATUS_IGNORE);
+                                MPI_Test(&(cd->edge_req[0][v][i]), &tst, MPI_STATUS_IGNORE);
                                 if (tst){
-                                    handle_comm(net,v,gl_w, &(net->aflow[v][i]), &(net->adj_d[v][i]), &(cd->out_req[v][i]), &(cd->out_bi[v][i]), &(cd->out_flag[v][i]), cd->buff[bi], &(cd->avail),  cd , rank,size);
+                                    handle_comm(net,v,gl_w, 0, 2*i, cd,rank,size);
                                 } else {
                                     // check comm backlog while we wait!
                                     check_comm(net, z,  cd , rank,size);
@@ -559,22 +567,22 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                             cd->buff[bi][1] = ch;
                             cd->buff[bi][2] = net->hght[v];
                             cd->buff[bi][3] = gl_w;
-                            cd->buff[bi][4] = net->adj[v][3*i+2]; 
-                            MPI_Isend(cd->buff[bi], 5, MPI_INT, gl_w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cd->out_req[v][i]));
-                            cd->out_bi[v][i] = bi;
-                            cd->out_flag[v][i] = 4; // 100 (send query fwd)
+                            cd->buff[bi][4] = net->adj[0][v][2*i+1]; 
+                            MPI_Isend(cd->buff[bi], 5, MPI_INT, gl_w/net->std_npp, FWD_QUERY, MPI_COMM_WORLD, &(cd->edge_req[0][v][i]));
+                            cd->edge_bi[0][v][i] = bi;
+                            cd->edge_flag[0][v][i] = 4; // 100 (send query fwd)
                         }
                     }
                 }
             }
             
             for (int i=0; i<net->ideg[v]; i++){
-                assert(  ( (cd->in_bi[v][i]==-1)&&(cd->in_flag[v][i]==NOTHING) )   ||   ((cd->in_bi[v][i]!=-1)&&(cd->in_flag[v][i]!=NOTHING)));
+                assert(  ( (cd->edge_bi[1][v][i]==-1)&&(cd->edge_flag[1][v][i]==NOTHING) )   ||   ((cd->edge_bi[1][v][i]!=-1)&&(cd->edge_flag[1][v][i]!=NOTHING)));
                 listen(net, cd ,rank,size);
                 listen_distance(net, cd ,rank,size);
-                gl_w = net->badj[v][2*i];
-                dw = net->badj_d[v][i];
-                r = 0 - net->bflow[v][i];
+                gl_w = net->adj[1][v][2*i];
+                dw = net->adj_d[1][v][i];
+                r = 0 - net->flow[1][v][i];
                 e = net->ex[v];
                 ch = min(e,r);
                 win = w_in(gl_w,net->npp);
@@ -583,16 +591,16 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                     if (win){
                         progress++;
                         loc_w = gl_w-rank*(net->std_npp);
-                        net->aflow[v][i] += ch;
-                        net->bflow[loc_w][net->badj[v][2*i+1]/2] -= ch;
+                        net->flow[0][v][i] += ch;
+                        net->flow[1][loc_w][net->adj[1][v][2*i+1]/2] -= ch;
                         net->ex[v] -= ch;
                         net->ex[loc_w] += ch;
                     } else {
-                        if (cd->in_flag[v][i] ==NOTHING){
+                        if (cd->edge_flag[1][v][i] ==NOTHING){
                             while ((cd->avail.empty())){
-                                MPI_Test(&(cd->in_req[v][i]), &tst, MPI_STATUS_IGNORE);
+                                MPI_Test(&(cd->edge_req[1][v][i]), &tst, MPI_STATUS_IGNORE);
                                 if (tst){
-                                    handle_comm(net,v,gl_w, &(net->bflow[v][i]), &(net->badj_d[v][i]), &(cd->in_req[v][i]), &(cd->in_bi[v][i]), &(cd->in_flag[v][i]), cd->buff[bi], &(cd->avail),  cd , rank,size);
+                                    handle_comm(net,v,gl_w, 1, 2*i, cd,rank,size);
                                 } else {
                                     // check comm backlog while we wait!
                                     check_comm(net, z,  cd , rank,size);
@@ -607,10 +615,10 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                             cd->buff[bi][1] = ch;
                             cd->buff[bi][2] = net->hght[v];
                             cd->buff[bi][3] = gl_w;
-                            cd->buff[bi][4] = net->badj[v][2*i+1]; 
-                            MPI_Isend(cd->buff[bi], 5, MPI_INT, gl_w/net->std_npp, BWD_QUERY, MPI_COMM_WORLD, &(cd->in_req[v][i]));
-                            cd->in_bi[v][i] = bi;
-                            cd->in_flag[v][i] = 5; // 101 (send query bwd)
+                            cd->buff[bi][4] = net->adj[1][v][2*i+1]; 
+                            MPI_Isend(cd->buff[bi], 5, MPI_INT, gl_w/net->std_npp, BWD_QUERY, MPI_COMM_WORLD, &(cd->edge_req[1][v][i]));
+                            cd->edge_bi[1][v][i] = bi;
+                            cd->edge_flag[1][v][i] = 5; // 101 (send query bwd)
                         }
                     }
                 }
@@ -679,8 +687,8 @@ void output(resgraph net, string filename, double time){
     int w, f;
     for (int v=0; v< net.n; v++){
         for (int i=0; i< net.odeg[v]; i++){
-            w = net.adj[v][3*i];
-            f = net.aflow[v][i];
+            w = net.adj[0][v][2*i];
+            f = net.flow[0][v][i];
             outf << "f " << v << " " << w << " " << f << endl;
         }
     }
