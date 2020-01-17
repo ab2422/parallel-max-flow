@@ -20,19 +20,31 @@
  */
 void check_dist(resgraph *net, int v, comm_data *cd, int rank, int size);
 
-void handle_comm(resgraph *net, int v, int w, int *flowvj, int *adj_dvj, MPI_Request *req,  int *bi, unsigned char *flagv, int buffi[], std::queue<int> *avail, comm_data *cd, int rank, int size);
-
-void check_comm_helper(resgraph *net, int v, int incount, std::vector<int> *flowv, std::vector<int> *adjv, std::vector<int> *adj_dv, MPI_Request *reqv, std::vector<int> *arr_biv, std::vector<unsigned char> *arr_flagv, int **buff, std::queue<int> *avail, int arr_of_inds[], comm_data *cd, int rank, int size);
+/*
+ * Handles "planned" communication from local v to global gl_w, 
+ * which corresponds to edge in direction dir (1=bwd, 0=fwd)
+ * s.t. j is w's location in adj[dir[v].
+ */
+void handle_comm(resgraph *net, int v, int gl_w, int dir, int j, comm_data *cd, int rank, int size); 
 
 /*
- * Checks status of all pending communications, and if completed, processes them
+ * Checks status of all planned communications in direction dir involving v.
+ * Incount is the number of possible such communications.
+ * arr_of_inds is purely local, but since (possibly) large is stored in cd
+ */
+void check_comm_helper(resgraph *net, int v, int dir, int incount, int arr_of_inds[], comm_data *cd, int rank, int size);
+
+/*
+ * Checks status of all pending "planned" communications, 
+ * and if completed, processes them.
  */ 
 void check_comm(resgraph *net, int v, comm_data *cd,int rank, int size);
 
 /*
- * Helps the listener function.
+ * Helps the listener function. Dir is the direction that the v w edge goes, 
+ * from w's (the receiver's) perspective
  */
-void listen_helper(resgraph *net, comm_data *cd, int bi, std::vector<std::vector<int>> *flow, std::vector<std::vector<int>> *adj, std::vector<std::vector<unsigned char>> *flagarr, int sc, MPI_Request ***reqarr, MPI_Request **req, unsigned char **flagv_pt, int *k, int rank, int size);
+void listen_helper(resgraph *net, comm_data *cd, int bi, int dir, MPI_Request **req, unsigned char **flagv_pt, int rank, int size);
 
 /*
  * Listens to see if any processors have finished.
