@@ -35,6 +35,26 @@ static void wait_for_debugger(){
     while (0 == i){}
 }
 
+void print_flow(resgraph *net, int rank){
+    string line = "";
+    for (int v=0; v<net->npp; v++){
+        line = "Vert: "+ to_string(v+rank*net->std_npp) +" Out flow: ";
+        for (int j=0; j<net->odeg[v]; j++){
+            line = line + to_string(net->flow[0][v][j]) + " ";
+        }
+        line = line + "\n";
+        cout << line;
+    }
+    for (int v=0; v<net->npp; v++){
+        line = "Vert: "+ to_string(v+rank*net->std_npp) +" IN flow: ";
+        for (int j=0; j<net->ideg[v]; j++){
+            line = line + to_string(net->flow[1][v][j]) + " ";
+        }
+        line = line + "\n";
+        cout << line;
+    }
+}
+
 /*
 Parses a file filename provided in DIMACS netflow format. 
 * Stores #verts in *n, #edges in *m.

@@ -30,6 +30,8 @@ bool is_src_loc(resgraph *net, int loc_v, int rank, int size);
 
 bool is_sink_loc(resgraph *net, int loc_v, int rank, int size);
 
+void print_flow(resgraph *net, int rank);
+
 network parse(std::string filename, int rank, int size);
 
 resgraph setup(network *net, int rank, int size);

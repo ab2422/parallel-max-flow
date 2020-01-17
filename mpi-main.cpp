@@ -45,6 +45,8 @@ double total = end-start;
 
 printf("Elapsed time: %f sec on processor %d\n", end, rank);
 
+print_flow(&graph, rank);
+
 cleanup(&graph,&net);
 
 
