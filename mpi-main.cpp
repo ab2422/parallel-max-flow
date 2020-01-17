@@ -43,7 +43,7 @@ double total = end-start;
 
 //output(graph, outfile, total);
 
-printf("Elapsed time: %f sec on processor %d\n", rank);
+printf("Elapsed time: %f sec on processor %d\n", end, rank);
 
 cleanup(&graph,&net);
 
@@ -52,10 +52,6 @@ cleanup(&graph,&net);
 
 
 MPI_Finalize();
-
-sleep(2);
-
-output(graph, outfile, total);
 
 return 0;
 
