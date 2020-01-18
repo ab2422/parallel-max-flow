@@ -50,7 +50,7 @@ void listen_helper(resgraph *net, comm_data *cd, int bi, int dir, MPI_Request **
 /*
  * Listens to see if any processors have finished.
  */
-void listen_finish(resgraph *net, comm_data *cd, int rank, int size);
+void handle_finish(resgraph *net, comm_data *cd, int rank, int size);
 
 /*
  * Listens for incoming distance updates & processes them.

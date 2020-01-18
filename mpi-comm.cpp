@@ -182,17 +182,93 @@ void listen_helper(resgraph *net, comm_data *cd, int bi, int dir, MPI_Request **
     cd->edge_bi[dir][loc_w][i/2] = bi;
 }
 
-void listen_finish(resgraph *net, comm_data *cd, int rank, int size){
-    int flag=1;
-    int src;
-    MPI_Status stat;
-    MPI_Iprobe(MPI_ANY_SOURCE, FINISH, MPI_COMM_WORLD, &flag, &stat);
-    while (flag){
-        src = stat.MPI_SOURCE;
-        MPI_Recv(&(cd->proc_done[src]), 1, MPI_CXX_BOOL, src, FINISH, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Iprobe(MPI_ANY_SOURCE, FINISH, MPI_COMM_WORLD, &flag, &stat);
+/*
+ * Handle the ring for completion, both initiating & passing.
+ */
+void handle_finish(resgraph *net, comm_data *cd, int rank, int size){
+    bool f_done;
+    int f_tst;
+    int f_prev = (rank-1+size)%size;
+    int f_nxt = (rank+1)%size;
+    int f_buf;
+    if (cd->proc_done[rank]){
+        if (!net->active.empty()){
+            // we're undone
+            cd->proc_done[rank]=0;
+        }
+        
+    } else {
+        cd->proc_done[rank]=1;
+        cd->num_times_done++;
+        if (rank==FIN_PROC){
+            // handle initition of ring, & the handoffs
+            if (cd->ring_stat==0){
+
+                cd->prev_total=cd->num_times_done;
+                MPI_Isend(&cd->prev_total, 1, MPI_INT, f_nxt, F_RING, MPI_COMM_WORLD, &(cd->ring_req));
+                cd->ring_flag=1;
+                cd->ring_stat=1;
+
+            } else if (cd->ring_stat == 1){
+
+                MPI_Iprobe(f_prev, F_RING, MPI_COMM_WORLD, &f_tst, MPI_STATUS_IGNORE);
+                if (f_tst){
+                    // finished 1st ring, start 2nd
+                    MPI_Wait(&(cd->ring_req), MPI_STATUS_IGNORE);
+                    cd->ring_flag=0;
+                    MPI_Recv(&(cd->prev_total), 1, MPI_INT, f_prev, F_RING, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    cd->nxt_total=cd->num_times_done;
+                    MPI_Isend(&(cd->nxt_total), 1, MPI_INT, f_nxt, F_RING, MPI_COMM_WORLD, &(cd->ring_req));
+                    cd->ring_stat=2;
+                    cd->ring_flag=1;
+                }
+
+            } else if (cd->ring_stat ==2){
+
+                MPI_Iprobe(f_prev, F_RING, MPI_COMM_WORLD, &f_tst, MPI_STATUS_IGNORE);
+                if (f_tst){
+                    MPI_Wait(&(cd->ring_req), MPI_STATUS_IGNORE);
+                    cd->ring_flag=0;
+                    MPI_Recv(&(cd->nxt_total), 1, MPI_INT, f_prev, F_RING, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    if (cd->prev_total==cd->nxt_total){
+                        // we're done! no one has restarted & finished again since our first ring.
+                        f_done=1;
+                        for (int j=0; j<size; j++){
+                            if (j!=rank){
+                                MPI_Isend(&(f_done), 1, MPI_CXX_BOOL, j, FINISH, MPI_COMM_WORLD, &(cd->fin_req[j]));
+                            }
+                        }
+                        cd->ring_stat=3;
+                        
+                    } else {
+                        // looks like some stuff has happened, let's restart
+                        cd->ring_stat=0;
+                    }
+                }
+
+            } else {
+                //so ring_stat==3, we'll finish as soon as our sends are done
+                MPI_Testall(size, cd->fin_req, &(cd->all_done), MPI_STATUSES_IGNORE);                    
+            }
+        } else {
+            MPI_Iprobe(f_prev, F_RING, MPI_COMM_WORLD, &f_tst, MPI_STATUS_IGNORE);
+            if (f_tst){
+                MPI_Recv(&f_buf, 1, MPI_INT, f_prev, F_RING, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                f_buf += cd->num_times_done;
+                MPI_Wait(&(cd->ring_req), MPI_STATUS_IGNORE);
+                MPI_Isend(&f_buf, 1, MPI_INT, f_nxt, F_RING, MPI_COMM_WORLD, &(cd->ring_req));
+                cd->ring_flag=1;
+            }
+            MPI_Iprobe(FIN_PROC, FINISH, MPI_COMM_WORLD, &f_tst, MPI_STATUS_IGNORE);
+            if (f_tst){
+                MPI_Recv(&(cd->all_done), 1, MPI_CXX_BOOL, FIN_PROC, FINISH, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            }
+
+        }
     }
+
 }
+
 
 void listen_distance(resgraph *net, comm_data *cd, int rank, int size){
     int flag=1;

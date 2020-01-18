@@ -13,10 +13,12 @@
 #define FWD_RESPONSE 110
 #define BWD_RESPONSE 115
 #define DIST_UPDATE 300
-#define FIN_QUERY 250
-#define FIN_RESPONSE 260
+#define FINISH 250
+#define F_RING 260
 // REQUIRE: NOTHING >= 16
 #define NOTHING 32
+
+#define FIN_PROC 0
 
 // For binary 4-digit d_2d_1d_0: d_3 = distance / affirmation ,
 //                               d_2 = send/receive,  

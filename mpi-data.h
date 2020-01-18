@@ -64,6 +64,14 @@ struct comm_data {
     // for completion checking comm: one for each proc
     MPI_Request *fin_req;
     bool *proc_done;
+    bool ring_flag; // true if send in progress
+    unsigned char ring_stat;
+    int num_times_done;
+    int all_done;
+    int prev_total;
+    int nxt_total;
+    MPI_Request ring_req;
+
 
     // for all
     int buff_size;

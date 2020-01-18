@@ -427,6 +427,8 @@ void pulse(resgraph *net_ptr){
 comm_data setup_cd(resgraph *net, int rank, int size){
     comm_data cds;
 
+    cds.num_times_done = 0;
+
     cds.edge_bi =   vector<vector<vector<int>>>(2);
     cds.edge_bi[0].resize(net->npp);
     cds.edge_bi[1].resize(net->npp);
@@ -489,6 +491,13 @@ comm_data setup_cd(resgraph *net, int rank, int size){
 
     cds.fin_req = (MPI_Request*) malloc(size*sizeof(MPI_Request));
     cds.proc_done = (bool*) malloc(size*sizeof(bool));
+    cds.num_times_done=0;
+    cds.all_done=0;
+    cds.ring_stat=0;
+    cds.prev_total=0;
+    cds.nxt_total=0;
+    cds.ring_req = MPI_REQUEST_NULL;
+    cds.ring_flag=0;
     for (int i=0; i<size; i++){
         cds.fin_req[i] = MPI_REQUEST_NULL;
         cds.proc_done[i] = 0;
@@ -523,25 +532,19 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
     z=0;
     int tally=0;
     int r,c,ch,e,d_p,dw; // p-r vars
-    int j,bi,tst; // comm vars
-
-    bool all_done=0;
-    MPI_Request done_req=MPI_REQUEST_NULL;
-    int progress = 1;
     int dv;
+    int j,bi,tst; // comm vars
 
     // start actual algo
     bool win;
     
-    while (!all_done){
-        while (  (!(net->active.empty()) && (progress != 0))   ) {
-            progress=0;
+    while (!(cd->all_done)){
+        while (  (!(net->active.empty()))   ) {
             v = net->active.front();
             net->active.pop();
 
             // check up on all pending communication to forward nodes
             check_comm(net,v, cd, rank,size);
-            listen_finish(net,cd,rank,size);
             listen_distance(net,cd,rank,size);
             listen(net,cd,rank,size);
 
@@ -559,7 +562,6 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                 printf("gl_v: %d, gl_w: %d, dv: %d, dw: %d, res: %d, ex: %d, ch: %d\n", v+rank*net->std_npp, gl_w, net->hght[v], dw,r, e, ch);
                 if ((r>0) && (net->hght[v] == dw+1)) {
                     if (win){
-                        progress++;
                         loc_w = gl_w-rank*(net->std_npp);
                         net->flow[0][v][i] += ch;
                         net->flow[1][loc_w][ net->adj[0][v][2*i+1]/2] -= ch;
@@ -578,7 +580,6 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                                     z = (z+1)%(net->npp);
                                 }
                             }
-                            progress++;
                             loc_w = gl_w-rank*(net->std_npp);
                             net->flow[0][v][i] += ch;
                             net->ex[v] -= ch;
@@ -611,7 +612,6 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                 printf("gl_v: %d, gl_w: %d, dv: %d, dw: %d, res: %d, ex: %d, ch: %d\n", v+rank*net->std_npp, gl_w, net->hght[v], dw,r, e, ch);
                 if ((r>0) && (net->hght[v] == dw+1)) {
                     if (win){
-                        progress++;
                         loc_w = gl_w-rank*(net->std_npp);
                         net->flow[1][v][i] += ch;
                         net->flow[0][loc_w][net->adj[1][v][2*i+1]/2] -= ch;
@@ -630,7 +630,6 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                                     z = (z+1)%(net->npp);
                                 }
                             }
-                            progress++;
                             net->flow[1][v][i] += ch;
                             net->ex[v] -= ch;
 
@@ -654,39 +653,13 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
             dv = net->hght[v];
             check_dist(net,v,cd,rank,size);
             if (dv>net->hght[v]){
-                progress++;
             }
         }
+        check_comm(net,z,cd,rank,size);
+        z=(z+1)%net->npp;
         listen(net,cd,rank,size);
         listen_distance(net,cd,rank,size);
-        listen_finish(net, cd, rank,size);
-        if ( cd->proc_done[rank==1]){
-            printf("I'm done! proc %d\n", rank);
-            if (!net->active.empty()){
-                cd->proc_done[rank]=0;
-                for (int i=0; i<size; i++){
-                    if (i!=rank){
-                        MPI_Wait(&(cd->fin_req[i]), MPI_STATUS_IGNORE);
-                        MPI_Isend(&(cd->proc_done[rank]), 1, MPI_CXX_BOOL, i, FINISH, MPI_COMM_WORLD, &(cd->fin_req[i]));
-                    }
-                }
-            }
-            
-        } else {
-            cd->proc_done[rank]=1;
-            for (int i=0; i<size; i++){
-                if (i!= rank){
-                    MPI_Wait(&(cd->fin_req[i]), MPI_STATUS_IGNORE);
-                    MPI_Isend(&(cd->proc_done[rank]), 1, MPI_CXX_BOOL, i,  FINISH, MPI_COMM_WORLD, &(cd->fin_req[i]));
-                }
-            }
-        }
-        all_done = 1;
-        for (int i=0; i<size; i++){
-            all_done = (all_done && cd->proc_done[i]); 
-        }
-
-        progress = 1;
+        handle_finish(net, cd, rank,size);
     }
 }
 
