@@ -63,7 +63,6 @@ void check_dist(resgraph *net, int v, comm_data *cd, int rank, int size){
                 cd->buff[bi][2] = net->hght[v];
                 cd->buff[bi][3] = w;
                 cd->buff[bi][4] = j;
-                printf("Sending [%d, %d, %d, %d, %d] from %d to %d\n", cd->buff[bi][0], cd->buff[bi][1], cd->buff[bi][2], cd->buff[bi][3], cd->buff[bi][4], rank, i);
                 if (cd->dist_bi[0][v][i] != -1){
                     MPI_Wait(&(cd->dist_req[0][v][i]), MPI_STATUS_IGNORE);
                     cd->avail.push(cd->dist_bi[0][v][i]);
@@ -200,73 +199,72 @@ void handle_finish(resgraph *net, comm_data *cd, int rank, int size){
     } else {
         cd->proc_done[rank]=1;
         cd->num_times_done++;
-        if (rank==FIN_PROC){
-            // handle initition of ring, & the handoffs
-            if (cd->ring_stat==0){
+    }
+    if ((rank==FIN_PROC)&&(cd->proc_done[rank])){
+        // handle initition of ring, & the handoffs
+        if (cd->ring_stat==0){
 
-                cd->prev_total=cd->num_times_done;
-                MPI_Isend(&cd->prev_total, 1, MPI_INT, f_nxt, F_RING, MPI_COMM_WORLD, &(cd->ring_req));
-                cd->ring_flag=1;
-                cd->ring_stat=1;
+            cd->prev_total=cd->num_times_done;
+            MPI_Isend(&cd->prev_total, 1, MPI_INT, f_nxt, F_RING, MPI_COMM_WORLD, &(cd->ring_req));
+            cd->ring_flag=1;
+            cd->ring_stat=1;
 
-            } else if (cd->ring_stat == 1){
+        } else if (cd->ring_stat == 1){
 
-                MPI_Iprobe(f_prev, F_RING, MPI_COMM_WORLD, &f_tst, MPI_STATUS_IGNORE);
-                if (f_tst){
-                    // finished 1st ring, start 2nd
-                    MPI_Wait(&(cd->ring_req), MPI_STATUS_IGNORE);
-                    cd->ring_flag=0;
-                    MPI_Recv(&(cd->prev_total), 1, MPI_INT, f_prev, F_RING, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                    cd->nxt_total=cd->num_times_done;
-                    MPI_Isend(&(cd->nxt_total), 1, MPI_INT, f_nxt, F_RING, MPI_COMM_WORLD, &(cd->ring_req));
-                    cd->ring_stat=2;
-                    cd->ring_flag=1;
-                }
-
-            } else if (cd->ring_stat ==2){
-
-                MPI_Iprobe(f_prev, F_RING, MPI_COMM_WORLD, &f_tst, MPI_STATUS_IGNORE);
-                if (f_tst){
-                    MPI_Wait(&(cd->ring_req), MPI_STATUS_IGNORE);
-                    cd->ring_flag=0;
-                    MPI_Recv(&(cd->nxt_total), 1, MPI_INT, f_prev, F_RING, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                    if (cd->prev_total==cd->nxt_total){
-                        // we're done! no one has restarted & finished again since our first ring.
-                        f_done=1;
-                        for (int j=0; j<size; j++){
-                            if (j!=rank){
-                                MPI_Isend(&(f_done), 1, MPI_CXX_BOOL, j, FINISH, MPI_COMM_WORLD, &(cd->fin_req[j]));
-                            }
-                        }
-                        cd->ring_stat=3;
-                        
-                    } else {
-                        // looks like some stuff has happened, let's restart
-                        cd->ring_stat=0;
-                    }
-                }
-
-            } else {
-                //so ring_stat==3, we'll finish as soon as our sends are done
-                MPI_Testall(size, cd->fin_req, &(cd->all_done), MPI_STATUSES_IGNORE);                    
-            }
-        } else {
             MPI_Iprobe(f_prev, F_RING, MPI_COMM_WORLD, &f_tst, MPI_STATUS_IGNORE);
             if (f_tst){
-                MPI_Recv(&f_buf, 1, MPI_INT, f_prev, F_RING, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                f_buf += cd->num_times_done;
+                // finished 1st ring, start 2nd
                 MPI_Wait(&(cd->ring_req), MPI_STATUS_IGNORE);
-                MPI_Isend(&f_buf, 1, MPI_INT, f_nxt, F_RING, MPI_COMM_WORLD, &(cd->ring_req));
+                cd->ring_flag=0;
+                MPI_Recv(&(cd->prev_total), 1, MPI_INT, f_prev, F_RING, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                cd->nxt_total=cd->num_times_done;
+                MPI_Isend(&(cd->nxt_total), 1, MPI_INT, f_nxt, F_RING, MPI_COMM_WORLD, &(cd->ring_req));
+                cd->ring_stat=2;
                 cd->ring_flag=1;
             }
-            MPI_Iprobe(FIN_PROC, FINISH, MPI_COMM_WORLD, &f_tst, MPI_STATUS_IGNORE);
+
+        } else if (cd->ring_stat ==2){
+
+            MPI_Iprobe(f_prev, F_RING, MPI_COMM_WORLD, &f_tst, MPI_STATUS_IGNORE);
             if (f_tst){
-                MPI_Recv(&(cd->all_done), 1, MPI_CXX_BOOL, FIN_PROC, FINISH, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Wait(&(cd->ring_req), MPI_STATUS_IGNORE);
+                cd->ring_flag=0;
+                MPI_Recv(&(cd->nxt_total), 1, MPI_INT, f_prev, F_RING, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                if (cd->prev_total==cd->nxt_total){
+                    // we're done! no one has restarted & finished again since our first ring.
+                    f_done=1;
+                    for (int j=0; j<size; j++){
+                        if (j!=rank){
+                            MPI_Isend(&(f_done), 1, MPI_CXX_BOOL, j, FINISH, MPI_COMM_WORLD, &(cd->fin_req[j]));
+                        }
+                    }
+                    cd->ring_stat=3;
+                    
+                } else {
+                    // looks like some stuff has happened, let's restart
+                    cd->ring_stat=0;
+                }
             }
 
+        } else if (cd->proc_done[rank]) {
+            //so ring_stat==3, we'll finish as soon as our sends are done
+            MPI_Testall(size, cd->fin_req, &(cd->all_done), MPI_STATUSES_IGNORE);                    
         }
-    }
+    } else {
+        MPI_Iprobe(f_prev, F_RING, MPI_COMM_WORLD, &f_tst, MPI_STATUS_IGNORE);
+        if (f_tst){
+            MPI_Recv(&f_buf, 1, MPI_INT, f_prev, F_RING, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            f_buf += cd->num_times_done;
+            MPI_Wait(&(cd->ring_req), MPI_STATUS_IGNORE);
+            MPI_Isend(&f_buf, 1, MPI_INT, f_nxt, F_RING, MPI_COMM_WORLD, &(cd->ring_req));
+            cd->ring_flag=1;
+        }
+        MPI_Iprobe(FIN_PROC, FINISH, MPI_COMM_WORLD, &f_tst, MPI_STATUS_IGNORE);
+        if (f_tst){
+            MPI_Recv(&(cd->all_done), 1, MPI_CXX_BOOL, FIN_PROC, FINISH, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
 
+    }
 }
 
 
@@ -300,7 +298,6 @@ void listen_distance(resgraph *net, comm_data *cd, int rank, int size){
             net->adj_d[0][loc_w][i/2]= dv;
         }
         cd->avail.push(bi);
-        printf("done dist upd: v=%d, w=%d, new dv=%d\n", gl_v, w,dv);
 
         MPI_Iprobe(MPI_ANY_SOURCE, DIST_UPDATE, MPI_COMM_WORLD, &flag, &stat);
     }

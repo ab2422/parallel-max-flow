@@ -310,9 +310,9 @@ resgraph setup(network *inet, int rank, int size){
         }
     }
 
-    printf("about to bcast, proc %d\n", rank);
+    //printf("about to bcast, proc %d\n", rank);
     MPI_Bcast(buffer, num_sent, MPI_INT, onet.s_proc, MPI_COMM_WORLD);
-    printf("finished bcast, proc %d\n", rank);
+    //printf("finished bcast, proc %d\n", rank);
     if (rank != onet.s_proc){
         for (int i=0; i< num_sent; i++){
             w = buffer[3*i];
@@ -559,7 +559,7 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                 e = net->ex[v];
                 ch = min(e,r);
                 win = w_in(gl_w,net->npp);
-                printf("gl_v: %d, gl_w: %d, dv: %d, dw: %d, res: %d, ex: %d, ch: %d\n", v+rank*net->std_npp, gl_w, net->hght[v], dw,r, e, ch);
+                //printf("gl_v: %d, gl_w: %d, dv: %d, dw: %d, res: %d, ex: %d, ch: %d\n", v+rank*net->std_npp, gl_w, net->hght[v], dw,r, e, ch);
                 if ((r>0) && (net->hght[v] == dw+1)) {
                     if (win){
                         loc_w = gl_w-rank*(net->std_npp);
@@ -609,7 +609,7 @@ void async_pr(resgraph *net, comm_data *cd, int rank,int size){
                 e = net->ex[v];
                 ch = min(e,r);
                 win = w_in(gl_w,net->npp);
-                printf("gl_v: %d, gl_w: %d, dv: %d, dw: %d, res: %d, ex: %d, ch: %d\n", v+rank*net->std_npp, gl_w, net->hght[v], dw,r, e, ch);
+                //printf("gl_v: %d, gl_w: %d, dv: %d, dw: %d, res: %d, ex: %d, ch: %d\n", v+rank*net->std_npp, gl_w, net->hght[v], dw,r, e, ch);
                 if ((r>0) && (net->hght[v] == dw+1)) {
                     if (win){
                         loc_w = gl_w-rank*(net->std_npp);

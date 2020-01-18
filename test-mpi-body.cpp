@@ -491,7 +491,7 @@ TEST_CASE("COMPLETE: basic net test", "[2proc]"){
             REQUIRE(net.flow[0][2][1] == 5);
         } else {
             REQUIRE(net.flow[0][0][0] == 10);
-            REQUIRE(net.flow[0][1][0] == 4);
+            REQUIRE(net.flow[0][1][0] == 5);
             REQUIRE(net.flow[0][2].size() == 0);
         }
     }
