@@ -85,7 +85,6 @@ Parses a file filename provided in DIMACS netflow format.
 * To ensure zero indexing, shifts indices in file all down by one
 */
 network parse(string filename, int rank, int size){
-    printf("Starting parse\n");
     network net;
     string line;
     ifstream file;
@@ -179,9 +178,6 @@ network parse(string filename, int rank, int size){
                     net.cap[v-rank*npp].push_back(cap);
                     jv = net.adj[0][v-rank*net.std_npp].size();//pos w in v's
                     net.adj[0][v-rank*net.std_npp].push_back(w);
-			if ((w==32766)){
-				printf("v: %d, w: %d, v's fwd size:%d\n", v, w, jv);
-			}
                     if (win) {
                         net.ideg[w-rank*npp]++;
                         jw = net.adj[1][w-rank*npp].size();
@@ -190,9 +186,6 @@ network parse(string filename, int rank, int size){
         
                         net.adj[1][w-rank*npp].push_back(v); // bacwards edge
                         net.adj[1][w-rank*npp].push_back(jv); //jv = w pos in v list
-			if (w==32766){
- 			    printf("VIN/WIN: v (%d) pos in w (%d): %d, flipped: %d. Proc %d\n", v, w,jw,jv,rank);
-			}
                     }else{
                         MPI_Irecv(&rbuf,1,MPI_INT, w/net.std_npp, tag, MPI_COMM_WORLD, &rreq);
                         // wait for prev send to finish, so know sbuf avail
@@ -203,9 +196,6 @@ network parse(string filename, int rank, int size){
                         MPI_Wait(&rreq, &rstat);
 
                         net.adj[0][v-rank*npp].push_back(rbuf); 
-			if (w==32766){
- 			    printf("VIN, not WIN, v (%d) pos in w(%d): %d, flipped: %d. Proc %d\n", v, w,rbuf,jv,rank);
-			}
                     }
                 } else if (win) {
                     MPI_Irecv(&rbuf,1,MPI_INT,v/npp, tag, MPI_COMM_WORLD, &rreq);
@@ -218,9 +208,6 @@ network parse(string filename, int rank, int size){
                     MPI_Wait(&rreq, &rstat);
                     jv = rbuf;
                     net.adj[1][w-rank*npp].push_back(rbuf);
-			if (w==32766){
- 			    printf("w/in, v (%d) pos in w: %d, flipped: %d\n", v, jw,jv);
-			}
 
                 }
             } else if (line[0]!='c'){
@@ -252,7 +239,6 @@ network parse(string filename, int rank, int size){
 * Also performs "pulse 1", i.e. put excess through src.
 */
 resgraph setup(network *inet, int rank, int size){
-    printf("Starting setup\n");
     MPI_Status sstat,rstat;
     resgraph onet;
     onet.src = inet->src;
@@ -336,7 +322,6 @@ resgraph setup(network *inet, int rank, int size){
     int buffer[num_sent*3];
     int count=0;
     if (rank == onet.s_proc){
-	printf("Source ideg: %d\n", onet.ideg[s]);
         for (int i=0; i<onet.odeg[s]; i++){
             c = onet.cap[s][i];
             gl_w = onet.adj[0][s][2*i];
