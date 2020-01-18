@@ -18,6 +18,8 @@ using namespace std;
 #define min(a,b) ( ((a)<(b)) ? (a) : (b) )
 #define w_in(w,npp) ( (rank*(npp) <= (w)) && ((w) < ((rank+1)*(npp))) )
 
+#define MAX_TAG 32767
+
 bool is_src_loc(resgraph *net, int loc_v, int rank, int size){
     return  (net->s_proc == rank) && ( (loc_v +rank*net->std_npp) == net->src);
 }
@@ -81,6 +83,7 @@ Parses a file filename provided in DIMACS netflow format.
 * To ensure zero indexing, shifts indices in file all down by one
 */
 network parse(string filename, int rank, int size){
+    printf("Starting parse\n");
     network net;
     string line;
     ifstream file;
@@ -88,7 +91,7 @@ network parse(string filename, int rank, int size){
     int i=0;
     int npp=0;
     bool win=0;
-    int v,w,cap,f,jv,jw;
+    int v,w,cap,f,jv,jw,tag;
     int rbuf = 0; // v,w,c(v,w), pos
     int sbuf = 0; // v,w,c(v,w), pos
     MPI_Request sreq = MPI_REQUEST_NULL;
@@ -172,6 +175,7 @@ network parse(string filename, int rank, int size){
                     net.odeg[v-rank*npp]++;
                     jv = net.adj[0][v-rank*npp].size();
                     net.cap[v-rank*npp].push_back(cap);
+                    tag = (v*net.n+w)%MAX_TAG;
                     if (win) {
                         net.ideg[w-rank*npp]++;
                         jw = net.adj[1][w-rank*npp].size();
@@ -181,24 +185,24 @@ network parse(string filename, int rank, int size){
                         net.adj[1][w-rank*npp].push_back(v); // bacwards edge
                         net.adj[1][w-rank*npp].push_back(jv); //jv = w pos in v list
                     }else{
-                        MPI_Irecv(&rbuf,1,MPI_INT, w/npp, v*net.n+w, MPI_COMM_WORLD, &rreq);
+                        MPI_Irecv(&rbuf,1,MPI_INT, w/npp, tag, MPI_COMM_WORLD, &rreq);
                         // wait for prev send to finish, so know sbuf avail
                         MPI_Wait(&sreq, &sstat);
                         sbuf = jv;
-                        MPI_Isend(&sbuf, 1, MPI_INT, w/npp, v*net.n + w, MPI_COMM_WORLD,&sreq);
+                        MPI_Isend(&sbuf, 1, MPI_INT, w/npp, tag, MPI_COMM_WORLD,&sreq);
                         net.adj[0][v-rank*npp].push_back(w);
                         // wait for curr rec to finish, so can use data
                         MPI_Wait(&rreq, &rstat);
                         net.adj[0][v-rank*npp].push_back(rbuf); 
                     }
                 } else if (win) {
-                    MPI_Irecv(&rbuf,1,MPI_INT,v/npp, v*net.n+w, MPI_COMM_WORLD, &rreq);
+                    MPI_Irecv(&rbuf,1,MPI_INT,v/npp, tag, MPI_COMM_WORLD, &rreq);
                     net.ideg[w-rank*npp]++;
                     jw = net.adj[1][w-rank*npp].size();
                     net.adj[1][w-rank*npp].push_back(v);
                     MPI_Wait(&sreq, &sstat);
                     sbuf = jw;
-                    MPI_Isend(&sbuf,1,MPI_INT, v/npp, v*net.n+w, MPI_COMM_WORLD, &rreq);
+                    MPI_Isend(&sbuf,1,MPI_INT, v/npp, tag, MPI_COMM_WORLD, &rreq);
                     MPI_Wait(&rreq, &rstat);
                     jw = rbuf;
                     net.adj[1][w-rank*npp].push_back(rbuf);
@@ -232,6 +236,7 @@ network parse(string filename, int rank, int size){
 * Also performs "pulse 1", i.e. put excess through src.
 */
 resgraph setup(network *inet, int rank, int size){
+    printf("Starting setup\n");
     MPI_Status sstat,rstat;
     resgraph onet;
     onet.src = inet->src;
