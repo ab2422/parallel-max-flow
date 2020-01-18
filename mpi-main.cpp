@@ -27,6 +27,8 @@ string init_str = "data/";
 string infile = init_str+test+".max";
 string outfile = init_str+test+"my.soln";
 cout << infile << endl;
+
+//wait_for_debugger();
 network net = parse(infile, rank, size);
 
 double start = MPI_Wtime();
@@ -45,7 +47,8 @@ double total = end-start;
 
 printf("Elapsed time: %f sec on processor %d\n", end, rank);
 
-print_flow(&graph, rank);
+print_total(&graph,rank);
+//print_flow(&graph, rank);
 
 cleanup(&graph,&net);
 

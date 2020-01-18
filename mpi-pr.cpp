@@ -26,7 +26,7 @@ bool is_sink_loc(resgraph *net, int loc_v, int rank, int size){
     return (net->sink == (loc_v + rank*net->std_npp));
 }
 
-static void wait_for_debugger(){
+void wait_for_debugger(){
     volatile int i = 0;
     char hostname[256];
     gethostname(hostname, sizeof(hostname));
@@ -51,6 +51,20 @@ void print_flow(resgraph *net, int rank){
             line = line + to_string(net->flow[1][v][j]) + " ";
         }
         line = line + "\n";
+        cout << line;
+    }
+}
+
+void print_total(resgraph *net, int rank){
+    string line = "";
+    int flow=0;
+    int loc_s;
+    if (rank==net->s_proc){
+        loc_s = net->src - rank*net->std_npp;
+        for (int i=0; i<net->odeg[loc_s]; i++){
+            flow += net->flow[0][loc_s][i];
+        }
+        line = "Total flow: "+to_string(flow) +"\n";
         cout << line;
     }
 }
@@ -195,6 +209,8 @@ network parse(string filename, int rank, int size){
             }
         }
         file.close();
+    } else {
+        cerr << "File open error: " << strerror(errno) << endl;
     }
 
     for (int j=0; j< (net.npp); j++){ 
