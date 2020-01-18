@@ -29,23 +29,29 @@ string outfile = init_str+test+"my.soln";
 cout << infile << endl;
 
 //wait_for_debugger();
+double start = MPI_Wtime();
 network net = parse(infile, rank, size);
 
-double start = MPI_Wtime();
+double parse_t = MPI_Wtime();
 resgraph graph = setup(&net, rank, size);
+double setup_t = MPI_Wtime();
 comm_data cds = setup_cd(&graph, rank, size);
+double setup_cd_t = MPI_Wtime();
 async_pr(&graph, &cds, rank,size);
 
 double end = MPI_Wtime();
+double total_parse = parse_t-start;
+double total_setup = setup_t - parse_t;
+double total_cd = setup_cd_t - setup_t;
+double total_algo = end-setup_cd_t;
 double total = end-start;
-
 //while (graph.n_act > 0){
 //    pulse(&graph);
 //}
 
 //output(graph, outfile, total);
 
-printf("Elapsed time: %f sec on processor %d\n", end, rank);
+printf("Elapsed time on Processor %d:\n  Parse: %f sec, Setup: %f sec, \n  CD Setup: %f sec, Algo: %f sec\n", rank, total_parse, total_setup, total_cd, total_algo);
 
 print_total(&graph,rank);
 //print_flow(&graph, rank);

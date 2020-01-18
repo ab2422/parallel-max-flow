@@ -170,12 +170,12 @@ network parse(string filename, int rank, int size){
                 }
                 cap = atoi(&(line[i]));
                 win = (( (rank*npp<=w) && (w < (rank+1)*npp) ));
+                tag = (v*net.n+w)%MAX_TAG;
                 // if vin: 
                 if (((rank*npp)<=v) && (v < (rank+1)*npp)){
                     net.odeg[v-rank*npp]++;
                     jv = net.adj[0][v-rank*npp].size();
                     net.cap[v-rank*npp].push_back(cap);
-                    tag = (v*net.n+w)%MAX_TAG;
                     if (win) {
                         net.ideg[w-rank*npp]++;
                         jw = net.adj[1][w-rank*npp].size();
