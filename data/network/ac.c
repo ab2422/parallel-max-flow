@@ -11,6 +11,7 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 int cap;
@@ -21,18 +22,15 @@ int source;
 int sink;
 int input_seed;
 
-main(argc,argv)
-int argc;
-char *argv[];
+/* RandomInteger -- return a random integer from the range 1 .. high.
+*/
+int RandomInteger(high)
+int high;
 {
-
-  num_nodes = atoi(argv[1]);
-  input_seed = atoi(argv[2]);
-  srandom(input_seed);
-  UserValues();
+    return (random() % high) + 1;
 }
 
-Banner4()
+void Banner4()
 {
   printf("c Fully Dense Acyclic Network\n");
   printf("c for Max-Flow\n");
@@ -43,7 +41,7 @@ Banner4()
   printf("s %d\n", input_seed);
 }
 
-AcyclicNet1()
+void AcyclicNet1()
 {
 
   for (p = 1; p <= (num_nodes-1); p++)
@@ -58,21 +56,25 @@ AcyclicNet1()
     }
 }
 
-UserValues()
+void UserValues()
 {
   source = 1;
   sink = num_nodes;
   num_arcs = 0;
   for (i = 1; i <= (num_nodes-1); i++) num_arcs += i;
-  capacity = 1000000;
+  capacity = 30000;
   Banner4();
   AcyclicNet1();
 }
 
-/* RandomInteger -- return a random integer from the range 1 .. high.
-*/
-int RandomInteger(high)
-int high;
+
+void main(argc,argv)
+int argc;
+char *argv[];
 {
-    return (random() % high) + 1;
+
+  num_nodes = atoi(argv[1]);
+  input_seed = atoi(argv[2]);
+  srandom(input_seed);
+  UserValues();
 }
