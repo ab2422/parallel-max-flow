@@ -228,7 +228,8 @@ TEST_CASE("SETUP: parallel basic net test", "[2proc]"){
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     string file = ((string) DPREFIX) + ((string) "basic-net.max");
-    network net = parse(file,rank,size);
+    network net;
+    net=parse(file,rank,size);
     resgraph graph = setup(&net,rank,size);
     SECTION("shared attributes"){
         REQUIRE(net.n==graph.n);
