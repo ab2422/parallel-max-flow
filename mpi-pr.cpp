@@ -282,22 +282,24 @@ resgraph setup(network *inet, int rank, int size){
 
     int num_sent=0;    
     bool win;
-    int c,w;
+    int c,gl_w, loc_w,jw;
     int s = onet.src - rank*onet.std_npp;
     if (rank == onet.s_proc){
         onet.n_act =0;
         for (int i=0; i<onet.odeg[s]; i++){
             c = onet.cap[s][i];
-            w = onet.adj[0][s][2*i];
-            win = ( (rank*onet.std_npp) <= w ) && (w <((rank+1)*onet.std_npp));
+            gl_w = onet.adj[0][s][2*i];
+            win = ( (rank*onet.std_npp) <= gl_w ) && (gl_w <((rank+1)*onet.std_npp));
             onet.flow[0][s][i] = c;
             if (win){
-                onet.flow[1][w][ onet.adj[0][s][2*i+1] / 2 ] = -c;
-                onet.ex[w] = c;
-                onet.adj_d[1][w][onet.adj[0][s][2*i+1]/2] = onet.n;
-                if (w != onet.sink) {
+                jw = onet.adj[0][s][2*i+1];
+                loc_w = gl_w - rank*onet.std_npp;
+                onet.flow[1][loc_w][jw/2 ] = -c;
+                onet.ex[loc_w] = c;
+                onet.adj_d[1][loc_w][jw/2] = onet.n;
+                if (gl_w != onet.sink) {
                     onet.n_act += 1;
-                    onet.active.push(w);
+                    onet.active.push(gl_w);
                 }
             } else {
                 num_sent++;
@@ -322,12 +324,12 @@ resgraph setup(network *inet, int rank, int size){
     if (rank == onet.s_proc){
         for (int i=0; i<onet.odeg[s]; i++){
             c = onet.cap[s][i];
-            w = onet.adj[0][s][2*i];
-            win = ( (rank*onet.std_npp) <= w ) && (w <((rank+1)*onet.std_npp));
+            gl_w = onet.adj[0][s][2*i];
+            win = ( (rank*onet.std_npp) <= gl_w ) && (gl_w <((rank+1)*onet.std_npp));
             if (!win) {
-                buffer[3*count] = w;
+                buffer[3*count] = gl_w;
                 buffer[3*count + 1] = c;
-                buffer[3*count + 2] = onet.adj[0][s][3*i+2];
+                buffer[3*count + 2] = onet.adj[0][s][2*i+1];
                 count++;
             }
         }
@@ -338,15 +340,16 @@ resgraph setup(network *inet, int rank, int size){
     //printf("finished bcast, proc %d\n", rank);
     if (rank != onet.s_proc){
         for (int i=0; i< num_sent; i++){
-            w = buffer[3*i];
+            gl_w = buffer[3*i];
+            loc_w = gl_w - rank*onet.std_npp;
             c = buffer[3*i+1];
-            onet.flow[1][w][buffer[3*i+2]/2] = -c;
-            if (!(w_in(w,onet.std_npp))){
-                onet.flow[1][w-rank*onet.std_npp][buffer[3*i+2]/2]=-c;
-                onet.ex[w-rank*onet.std_npp]=c;
-                if (w != onet.sink){
+            onet.flow[1][loc_w][buffer[3*i+2]/2] = -c;
+            if ((w_in(gl_w,onet.std_npp))){
+                onet.flow[1][loc_w][buffer[3*i+2]/2]=-c;
+                onet.ex[loc_w]=c;
+                if (gl_w != onet.sink){
                     onet.n_act +=1;
-                    onet.active.push(w);
+                    onet.active.push(gl_w);
                 }
             }
         }

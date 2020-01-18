@@ -217,7 +217,7 @@ TEST_CASE("SETUP: serial basic net test", "[1proc]"){
         }
     }
 
-    cleanup(&graph,&net);
+    //cleanup(&graph,&net);
 
 }
 
@@ -312,7 +312,7 @@ TEST_CASE("SETUP: parallel basic net test", "[2proc]"){
             }
         }
     }
-    cleanup(&graph,&net);
+    //cleanup(&graph,&net);
 }
 
 /*
@@ -524,5 +524,5 @@ TEST_CASE("COMPLETE: basic net test", "[2proc]"){
         //REQUIRE(net->n_act == 0);
         REQUIRE(net.active.size()==0);
     }
-    cleanup(&net, &ntwk);
+    cleanup(&net, &ntwk, &cds);
 }
