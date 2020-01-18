@@ -359,14 +359,38 @@ resgraph setup(network *inet, int rank, int size){
 /*
 * Assumes net & orig are associated
 */
-void cleanup(resgraph *net, network *orig){
+void cleanup(resgraph *net, network *orig, comm_data *cd){
+    for (int v=0; v<net->npp; v++){
+        free(cd->edge_req[0][v]);
+        free(cd->dist_req[0][v]);
+    }
+    for (int v=0; v<net->npp; v++){
+        free(cd->edge_req[1][v]);
+        free(cd->dist_req[1][v]);
+    }
+    free(cd->edge_req[0]);
+    free(cd->edge_req[1]);
+    free(cd->edge_req);
+    free(cd->dist_req[0]);
+    free(cd->dist_req[1]);
+    free(cd->dist_req);
+
+    free(cd->fin_req);
+    free(cd->proc_done);
+    free(cd->arr_of_inds);
+    for (int bi=0; bi<cd->buff_size; bi++){
+        free(cd->buff[bi]);
+    }
+    free(cd->buff);
+
     free(net->hght_p);
     free(net->hght);
     free(net->dex);
     free(net->ex);
 
     free(orig->ideg);
-    free(orig->odeg);    
+    free(orig->odeg);
+
 }
 
 /*

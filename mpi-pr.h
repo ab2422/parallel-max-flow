@@ -57,6 +57,6 @@ void output(resgraph net, std::string filename, double time);
 
 bool check(std::string correct, std::string test);
 
-void cleanup(resgraph *net, network *orig);
+void cleanup(resgraph *net, network *orig, comm_data *cd);
 
 #endif

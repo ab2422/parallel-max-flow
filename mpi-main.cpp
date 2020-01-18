@@ -56,7 +56,7 @@ printf("Elapsed time on Processor %d:\n  Parse: %f sec, Setup: %f sec, \n  CD Se
 print_total(&graph,rank);
 //print_flow(&graph, rank);
 
-cleanup(&graph,&net);
+cleanup(&graph,&net,&cds);
 
 
 //check(init_str+test+".soln", outfile);
