@@ -5,6 +5,7 @@
 #include <math.h>
 #include <iostream>
 #include <string>
+#include <cstring>
 #include <fstream>
 #include <stdio.h>
 #include <unistd.h>
@@ -18,7 +19,8 @@ using namespace std;
 #define min(a,b) ( ((a)<(b)) ? (a) : (b) )
 #define w_in(w,npp) ( (rank*(npp) <= (w)) && ((w) < ((rank+1)*(npp))) )
 
-#define MAX_TAG 32767
+#define MAX_TAG 500
+// prev MAX_TAG 32767
 
 bool is_src_loc(resgraph *net, int loc_v, int rank, int size){
     return  (net->s_proc == rank) && ( (loc_v +rank*net->std_npp) == net->src);
@@ -170,7 +172,7 @@ network parse(string filename, int rank, int size){
                 }
                 cap = atoi(&(line[i]));
                 win = (( (rank*npp<=w) && (w < (rank+1)*npp) ));
-                tag = (v*net.n+w)%MAX_TAG;
+                tag = 5; //(v*net.n+w)%MAX_TAG;
                 // if vin: 
                 if (((rank*npp)<=v) && (v < (rank+1)*npp)){
                     net.odeg[v-rank*npp]++;
