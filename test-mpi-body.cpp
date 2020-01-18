@@ -42,33 +42,33 @@ TEST_CASE("Parser: serial basic net test", "[1proc]"){
     }
     SECTION("check adjacency matrix"){
         for (int v=0; v<net.n; v++){
-            REQUIRE(3*net.odeg[v]==(net.adj[v]).size());
+            REQUIRE(3*net.odeg[v]==(net.adj[0][v]).size());
         }
-        REQUIRE(((net.adj[0]==vector<int>({1,5,0, 2,15,0}) ) || (net.adj[0] == vector<int>({2,15,0, 1,5,0}))));
-        //REQUIRE(((net.adj[1]==vector<int>({3,5,4, 5}) ) || (net.adj[0] == vector<int>({4, 5,3,5}))));
-        //REQUIRE(((net.adj[2]==vector<int>({3,5,4, 5}) ) || (net.adj[0] == vector<int>({4, 5,3,5}))));
-        REQUIRE(((net.adj[3][0]==5) && (net.adj[3][1]==15)));
-        REQUIRE(((net.adj[4][0]==5) && (net.adj[4][1]==5)));
-        REQUIRE(net.adj[5]==vector<int>({}));
+        REQUIRE(((net.adj[0][0]==vector<int>({1,0, 2,0}) ) || (net.adj[0][0] == vector<int>({2,0, 1,0}))));
+        //REQUIRE(((net.adj[0][1]==vector<int>({3,5,4, 5}) ) || (net.adj[0][0] == vector<int>({4, 5,3,5}))));
+        //REQUIRE(((net.adj[0][2]==vector<int>({3,5,4, 5}) ) || (net.adj[0][0] == vector<int>({4, 5,3,5}))));
+        REQUIRE(((net.adj[0][3][0]==5) && (net.adj[0][3][1]==15)));
+        REQUIRE(((net.adj[0][4][0]==5) && (net.adj[0][4][1]==5)));
+        REQUIRE(net.adj[0][5]==vector<int>({}));
     }
     SECTION("check backwards adj matrix"){
         for (int w=0; w<net.n; w++){
-            REQUIRE(2*net.ideg[w] == net.badj[w].size() );
+            REQUIRE(2*net.ideg[w] == net.adj[1][w].size() );
         }
-        REQUIRE(net.badj[0]==vector<int>({}));
-        REQUIRE(((net.badj[1][0]==0)));
-        REQUIRE(((net.badj[2][0]==0)));
-        //REQUIRE(((net.badj[3]==vector<int>({1,5,2,5})) || (net.badj[3]==vector<int>({2,5,1,5}))));
-        //REQUIRE(((net.badj[4]==vector<int>({1,5,2,5})) || (net.badj[3]==vector<int>({2,5,1,5}))));
-        REQUIRE(((net.badj[5]==vector<int>({3,0, 4,0}))     ));//|| (net.badj[3]==vector<int>({4,5,1, 3,15,1}))));
+        REQUIRE(net.adj[1][0]==vector<int>({}));
+        REQUIRE(((net.adj[1][1][0]==0)));
+        REQUIRE(((net.adj[1][2][0]==0)));
+        //REQUIRE(((net.adj[1][3]==vector<int>({1,5,2,5})) || (net.adj[1][3]==vector<int>({2,5,1,5}))));
+        //REQUIRE(((net.adj[1][4]==vector<int>({1,5,2,5})) || (net.adj[1][3]==vector<int>({2,5,1,5}))));
+        REQUIRE(((net.adj[1][5]==vector<int>({3,0, 4,0}))     ));//|| (net.adj[1][3]==vector<int>({4,5,1, 3,15,1}))));
     }
     SECTION("check compatibility"){
         for (int v=0; v<net.n; v++){
             for (int i=0; i<net.odeg[v]; i++){
-                REQUIRE(v == net.badj[ net.adj[v][3*i] ][ net.adj[v][3*i+2] ]);
+                REQUIRE(v == net.adj[1][ net.adj[0][v][2*i] ][ net.adj[0][v][2*i+1] ]);
             }
             for (int i=0; i<net.ideg[v]; i++){
-                REQUIRE(v == net.adj[ net.badj[v][2*i] ][ net.badj[v][2*i+1] ]);
+                REQUIRE(v == net.adj[0][ net.adj[1][v][2*i] ][ net.adj[1][v][2*i+1] ]);
             }
         }
     }
@@ -111,41 +111,49 @@ TEST_CASE("Parser: parallel basic net test", "[2proc]"){
             REQUIRE(net.ideg[2]==2);
         }
     }
+
+    SECTION("check capacities"){
+        if (rank==0) {
+            REQUIRE(((net.cap[0]==vector<int>({5,15}))||(net.cap[0]==vector<int>({15,5})))); 
+            REQUIRE(net.cap[1]==net.cap[2]);
+            REQUIRE(net.cap[1] == vector<int>({5,5}));
+        }
+    }
     SECTION("check adjacency matrix"){
         for (int v=0; v<net.npp; v++){
-            REQUIRE(3*net.odeg[v]==(net.adj[v]).size());
+            REQUIRE(2*net.odeg[v]==(net.adj[0][v]).size());
         }
         if (rank==0){
-            REQUIRE(((net.adj[0]==vector<int>({1,5,0, 2,15,0}) ) || (net.adj[0] == vector<int>({2,15,0, 1,5,0}))));
-    //        REQUIRE(((net.adj[1]==vector<int>({3,5,4, 5}) ) || (net.adj[0] == vector<int>({4, 5,3,5}))));
-    //        REQUIRE(((net.adj[2]==vector<int>({3,5,4, 5}) ) || (net.adj[0] == vector<int>({4, 5,3,5}))));
+            REQUIRE(((net.adj[0][0]==vector<int>({1,0, 2,0}) ) || (net.adj[0][0] == vector<int>({2,0, 1,0}))));
+            //REQUIRE(((net.adj[0][1]==vector<int>({3,5,4, 5}) ) || (net.adj[0][0] == vector<int>({4, 5,3,5}))));
+            //REQUIRE(((net.adj[0][2]==vector<int>({3,5,4, 5}) ) || (net.adj[0][0] == vector<int>({4, 5,3,5}))));
         } else {
-            REQUIRE(((net.adj[0][0]==5) && (net.adj[0][1]==15)));
-            REQUIRE(((net.adj[1][0]==5) && (net.adj[1][1]==5)));
-            REQUIRE(net.adj[2]==vector<int>({}));
+            REQUIRE(((net.adj[0][0][0]==5) && (net.adj[0][0][1]==0)));
+            REQUIRE(((net.adj[0][1][0]==5) && (net.adj[0][1][1]==2)));
+            REQUIRE(net.adj[0][2]==vector<int>({}));
         }
     }
     SECTION("check backwards adj matrix"){
         for (int w=0; w<net.npp; w++){
-            REQUIRE(2*net.ideg[w] == net.badj[w].size() );
+            REQUIRE(2*net.ideg[w] == net.adj[1][w].size() );
         }
         if (rank==0){
-            REQUIRE(net.badj[0]==vector<int>({}));
-            REQUIRE(((net.badj[1][0]==0)));
-            REQUIRE(((net.badj[2][0]==0)));
+            REQUIRE(net.adj[1][0]==vector<int>({}));
+            REQUIRE(net.adj[1][1][0]==0);
+            REQUIRE(net.adj[1][2][0]==0);
         } else {
-    //        REQUIRE(((net.badj[0]==vector<int>({1,5,2,5})) || (net.badj[0]==vector<int>({2,5,1,5}))));
-    //        REQUIRE(((net.badj[1]==vector<int>({1,5,2,5})) || (net.badj[1]==vector<int>({2,5,1,5}))));
-            REQUIRE(((net.badj[2]==vector<int>({3,0, 4,0}))     ));//|| (net.badj[3]==vector<int>({4,5,1, 3,15,1}))));
+    //        REQUIRE(((net.adj[1][0][0]==vector<int>({1,5,2,5})) || (net.adj[1][0][0]==vector<int>({2,5,1,5}))));
+    //        REQUIRE(((net.adj[1][0][1]==vector<int>({1,5,2,5})) || (net.adj[1][0][1]==vector<int>({2,5,1,5}))));
+            REQUIRE(  net.adj[1][2]==vector<int>({3,0, 4,0})  );
         }
     }
     //SECTION("check compatibility"){
     //    for (int v=0; v<net.npp; v++){
     //        for (int i=0; i<net.odeg[v]; i++){
-    //            REQUIRE(v == net.badj[ net.adj[v][3*i] ][ net.adj[v][3*i+2] ]);
+    //            REQUIRE(v == net.adj[1][0][ net.adj[0][v][3*i] ][ net.adj[0][v][3*i+2] ]);
     //        }
     //        for (int i=0; i<net.ideg[v]; i++){
-    //            REQUIRE(v == net.adj[ net.badj[v][2*i] ][ net.badj[v][2*i+1] ]);
+    //            REQUIRE(v == net.adj[0][ net.adj[1][0][v][2*i] ][ net.adj[1][0][v][2*i+1] ]);
     //        }
     //    }
     //}
@@ -169,8 +177,8 @@ TEST_CASE("SETUP: serial basic net test", "[1proc]"){
         REQUIRE(net.odeg == graph.odeg);
         REQUIRE(net.ideg == graph.ideg);
         for (int v=0; v<graph.n; v++){
-            REQUIRE(net.adj[v] == graph.adj[v]);
-            REQUIRE(net.badj[v] == graph.badj[v]);
+            REQUIRE(net.adj[0][v] == graph.adj[0][v]);
+            REQUIRE(net.adj[1][v] == graph.adj[1][v]);
         }
     }
     
@@ -192,19 +200,19 @@ TEST_CASE("SETUP: serial basic net test", "[1proc]"){
     }
 
     SECTION("flows"){
-        REQUIRE(graph.aflow[0][0] == 5);
-        REQUIRE(graph.bflow[1][0] == -5);
+        REQUIRE(graph.flow[0][0][0] == 5);
+        REQUIRE(graph.flow[1][1][0] == -5);
 
-        REQUIRE(graph.aflow[0][1] == 15);
-        REQUIRE(graph.bflow[2][0] == -15);
+        REQUIRE(graph.flow[0][0][1] == 15);
+        REQUIRE(graph.flow[1][2][0] == -15);
         
         int w, j;
         for (int v=1; v< graph.n; v++) {
             for (int i=0; i<graph.odeg[v]; i++){
-                w = graph.adj[v][3*i];
-                j = graph.adj[v][3*i+2]; // pos in badj
-                REQUIRE(graph.aflow[v][i] == 0);
-                REQUIRE(graph.bflow[w ][ (j-1)/2 ] == 0);
+                w = graph.adj[0][v][2*i];
+                j = graph.adj[0][v][2*i+1]; // pos in badj
+                REQUIRE(graph.flow[0][v][i] == 0);
+                REQUIRE(graph.flow[1][w ][ (j-1)/2 ] == 0);
             }
         }
     }
@@ -230,17 +238,25 @@ TEST_CASE("SETUP: parallel basic net test", "[2proc]"){
         REQUIRE(net.odeg == graph.odeg);
         REQUIRE(net.ideg == graph.ideg);
         for (int v=0; v<graph.npp; v++){
-            REQUIRE(net.adj[v] == graph.adj[v]);
-            REQUIRE(net.badj[v] == graph.badj[v]);
+            REQUIRE(net.adj[0][v] == graph.adj[0][v]);
+            REQUIRE(net.adj[1][v] == graph.adj[1][v]);
         }
     }
     
     SECTION("excess"){
+        int v,w;
         if (rank==0){
             REQUIRE(graph.n_act == 2);
             REQUIRE(graph.ex[0] == 0);
             REQUIRE(graph.ex[1] == 5);
             REQUIRE(graph.ex[2] == 15);
+
+            REQUIRE(graph.active.size() == 2);
+            v = graph.active.front();
+            graph.active.pop();
+            w = graph.active.front();
+            REQUIRE( (( (v==1)&&(w==2) )  ||  ( (v==2)&&(w==1) )) );
+            
         } else {
             REQUIRE(graph.n_act == 0);
             REQUIRE(graph.ex[0] == 0);
@@ -263,35 +279,35 @@ TEST_CASE("SETUP: parallel basic net test", "[2proc]"){
 
     SECTION("flows"){
         if (rank==0){
-            REQUIRE(graph.aflow[0].size() == 2);
-            REQUIRE(graph.aflow[1].size() == 2);
-            REQUIRE(graph.aflow[2].size() == 2);
+            REQUIRE(graph.flow[0][0].size() == 2);
+            REQUIRE(graph.flow[0][1].size() == 2);
+            REQUIRE(graph.flow[0][2].size() == 2);
     
-            REQUIRE(graph.bflow[0].size() == 0);
-            REQUIRE(graph.bflow[1].size() == 1);
-            REQUIRE(graph.bflow[2].size() == 1);
+            REQUIRE(graph.flow[1][0].size() == 0);
+            REQUIRE(graph.flow[1][1].size() == 1);
+            REQUIRE(graph.flow[1][2].size() == 1);
     
-            REQUIRE(graph.aflow[0][0] == 5);
-            REQUIRE(graph.bflow[1][0] == -5);
+            REQUIRE(graph.flow[0][0][0] == 5);
+            REQUIRE(graph.flow[1][1][0] == -5);
     
-            REQUIRE(graph.aflow[0][1] == 15);
-            REQUIRE(graph.bflow[2][0] == -15);
+            REQUIRE(graph.flow[0][0][1] == 15);
+            REQUIRE(graph.flow[1][2][0] == -15);
     
-            REQUIRE(graph.aflow[1][0]==0);
-            REQUIRE(graph.aflow[1][1]==0);
-            REQUIRE(graph.aflow[1]==graph.aflow[2]);
+            REQUIRE(graph.flow[0][1][0]==0);
+            REQUIRE(graph.flow[0][1][1]==0);
+            REQUIRE(graph.flow[0][1]==graph.flow[0][2]);
     
         } else {
-            REQUIRE(graph.aflow[0].size()==1);
-            REQUIRE(graph.aflow[1].size()==1);
-            REQUIRE(graph.aflow[2].size()==0);
+            REQUIRE(graph.flow[0][0].size()==1);
+            REQUIRE(graph.flow[0][1].size()==1);
+            REQUIRE(graph.flow[0][2].size()==0);
             for (int v=0; v< graph.npp; v++) {
-                REQUIRE(graph.bflow[v].size()==2);
+                REQUIRE(graph.flow[1][v].size()==2);
                 for (int i=0; i<graph.odeg[v]; i++){
-                    REQUIRE(graph.aflow[v][i] == 0);
+                    REQUIRE(graph.flow[0][v][i] == 0);
                 } 
                 for (int i=0; i<graph.ideg[v]; i++){
-                    REQUIRE(graph.bflow[v][ i ] == 0);
+                    REQUIRE(graph.flow[1][v][ i ] == 0);
                 }
             }
         }
@@ -299,7 +315,8 @@ TEST_CASE("SETUP: parallel basic net test", "[2proc]"){
     cleanup(&graph,&net);
 }
 
-TEST_CASE("1 PULSE: serial basic net test", "[1proc],[sync]"){
+/*
+TEST_CASE("1 PULSE: serial basic net test", "[sync]"){
     int rank;
     int size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -328,22 +345,22 @@ TEST_CASE("1 PULSE: serial basic net test", "[1proc],[sync]"){
         REQUIRE(graph.ex[5] == 0);
     }
 
-    SECTION("aflows"){
-        REQUIRE(graph.aflow[0] == vector<int>({5,15}) );
-        REQUIRE(graph.aflow[1] == vector<int>({0, 0} ));
-        REQUIRE(graph.aflow[2] == vector<int>({0, 0} ));
-        REQUIRE(graph.aflow[3] == vector<int>({0}) );
-        REQUIRE(graph.aflow[4] == vector<int>({0} ));
-        REQUIRE(graph.aflow[5] == vector<int>({} ));
+    SECTION("flow[0]s"){
+        REQUIRE(graph.flow[0][0] == vector<int>({5,15}) );
+        REQUIRE(graph.flow[0][1] == vector<int>({0, 0} ));
+        REQUIRE(graph.flow[0][2] == vector<int>({0, 0} ));
+        REQUIRE(graph.flow[0][3] == vector<int>({0}) );
+        REQUIRE(graph.flow[0][4] == vector<int>({0} ));
+        REQUIRE(graph.flow[0][5] == vector<int>({} ));
     }
 
-    SECTION("bflows"){
-        REQUIRE(graph.bflow[0] == vector<int>({}));
-        REQUIRE(graph.bflow[1] == vector<int>({-5}));
-        REQUIRE(graph.bflow[2] == vector<int>({-15}));
-        REQUIRE(graph.bflow[3] == vector<int>({0, 0}));
-        REQUIRE(graph.bflow[4] == vector<int>({0, 0}));
-        REQUIRE(graph.bflow[5] == vector<int>({0, 0}));
+    SECTION("flow[1]s"){
+        REQUIRE(graph.flow[1][0] == vector<int>({}));
+        REQUIRE(graph.flow[1][1] == vector<int>({-5}));
+        REQUIRE(graph.flow[1][2] == vector<int>({-15}));
+        REQUIRE(graph.flow[1][3] == vector<int>({0, 0}));
+        REQUIRE(graph.flow[1][4] == vector<int>({0, 0}));
+        REQUIRE(graph.flow[1][5] == vector<int>({0, 0}));
     }
 
     cleanup(&graph,&net);
@@ -382,21 +399,21 @@ TEST_CASE("2 PULSE: basic net test", "[1proc],[sync]"){
     SECTION("n_act"){
         REQUIRE(graph.n_act == 3);
     }
-    SECTION("aflows"){
-        REQUIRE(graph.aflow[0] == vector<int>({5,15}));
-        REQUIRE(graph.aflow[1] == vector<int>({ 5,0 })); 
-        REQUIRE(graph.aflow[2] == vector<int>({ 5,5 })); 
-        REQUIRE(graph.aflow[3] == vector<int>({ 0 })); 
-        REQUIRE(graph.aflow[4] == vector<int>({ 0 })); 
-        REQUIRE(graph.aflow[5] == vector<int>({  })); 
+    SECTION("flow[0]s"){
+        REQUIRE(graph.flow[0][0] == vector<int>({5,15}));
+        REQUIRE(graph.flow[0][1] == vector<int>({ 5,0 })); 
+        REQUIRE(graph.flow[0][2] == vector<int>({ 5,5 })); 
+        REQUIRE(graph.flow[0][3] == vector<int>({ 0 })); 
+        REQUIRE(graph.flow[0][4] == vector<int>({ 0 })); 
+        REQUIRE(graph.flow[0][5] == vector<int>({  })); 
     }
-    SECTION("bflows"){
-        REQUIRE(graph.bflow[0] == vector<int>({   }));
-        REQUIRE(graph.bflow[1] == vector<int>({ -5 })); 
-        REQUIRE(graph.bflow[2] == vector<int>({ -15})); 
-        REQUIRE(graph.bflow[3] == vector<int>({ -5,-5 })); 
-        REQUIRE(graph.bflow[4] == vector<int>({ 0,-5 })); 
-        REQUIRE(graph.bflow[5] == vector<int>({ 0,0 })); 
+    SECTION("flow[1]s"){
+        REQUIRE(graph.flow[1][0] == vector<int>({   }));
+        REQUIRE(graph.flow[1][1] == vector<int>({ -5 })); 
+        REQUIRE(graph.flow[1][2] == vector<int>({ -15})); 
+        REQUIRE(graph.flow[1][3] == vector<int>({ -5,-5 })); 
+        REQUIRE(graph.flow[1][4] == vector<int>({ 0,-5 })); 
+        REQUIRE(graph.flow[1][5] == vector<int>({ 0,0 })); 
     }
 
 }
@@ -451,7 +468,7 @@ TEST_CASE("3 PULSE: basic net test", "[1proc],[sync]"){
     }
 
 }
-
+*/
 
 TEST_CASE("COMPLETE: basic net test", "[2proc]"){
     int rank;
@@ -466,31 +483,31 @@ TEST_CASE("COMPLETE: basic net test", "[2proc]"){
 
     SECTION("check forward flows"){
         if (rank==0){
-            REQUIRE(net.aflow[0][0] == 5);
-            REQUIRE(net.aflow[0][1] == 10);
-            REQUIRE(net.aflow[1][0] == 5);
-            REQUIRE(net.aflow[1][1] == 0);
-            REQUIRE(net.aflow[2][0] == 5);
-            REQUIRE(net.aflow[2][1] == 5);
+            REQUIRE(net.flow[0][0][0] == 5);
+            REQUIRE(net.flow[0][0][1] == 10);
+            REQUIRE(net.flow[0][1][0] == 5);
+            REQUIRE(net.flow[0][1][1] == 0);
+            REQUIRE(net.flow[0][2][0] == 5);
+            REQUIRE(net.flow[0][2][1] == 5);
         } else {
-            REQUIRE(net.aflow[0][0] == 10);
-            REQUIRE(net.aflow[1][0] == 4);
-            REQUIRE(net.aflow[2].size() == 0);
+            REQUIRE(net.flow[0][0][0] == 10);
+            REQUIRE(net.flow[0][1][0] == 5);
+            REQUIRE(net.flow[0][2].size() == 0);
         }
     }
     
     SECTION("check backward flows"){
         if (rank==0){
-            REQUIRE(net.bflow[0].size()==0);
-            REQUIRE(net.bflow[1][0] == -5);
-            REQUIRE(net.bflow[2][0] == -10);
+            REQUIRE(net.flow[1][0].size()==0);
+            REQUIRE(net.flow[1][1][0] == -5);
+            REQUIRE(net.flow[1][2][0] == -10);
         } else {
-            REQUIRE(net.bflow[0][0] == -5);
-            REQUIRE(net.bflow[0][1] == -5);
-            REQUIRE(net.bflow[1][0] == 0);
-            REQUIRE(net.bflow[1][1] == -5);
-            REQUIRE(net.bflow[2][0] == -10);
-            REQUIRE(net.bflow[2][1] == -5);
+            REQUIRE(net.flow[1][0][0] == -5);
+            REQUIRE(net.flow[1][0][1] == -5);
+            REQUIRE(net.flow[1][1][0] == 0);
+            REQUIRE(net.flow[1][1][1] == -5);
+            REQUIRE(net.flow[1][2][0] == -10);
+            REQUIRE(net.flow[1][2][1] == -5);
         }
     }
 
