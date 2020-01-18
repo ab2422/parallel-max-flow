@@ -1,7 +1,7 @@
 #include <iostream>
 #include <omp.h>
 #include <vector>
-#include "omp-pr-track-active.h"
+#include "omp-pr.h"
 using namespace std;
 
 
