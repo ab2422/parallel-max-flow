@@ -13,7 +13,8 @@
 #define FWD_RESPONSE 110
 #define BWD_RESPONSE 115
 #define DIST_UPDATE 300
-#define FINISH 250
+#define FIN_QUERY 250
+#define FIN_RESPONSE 260
 // REQUIRE: NOTHING >= 16
 #define NOTHING 32
 
