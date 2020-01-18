@@ -1,6 +1,0 @@
-
-This directory contains files for a Fortran benchmark test.
-For instructions, see either  readme.unix   or  readme.notunix
-depending on whether your local system can support Unix tools
-such as shell programs, awk, and pipes.  
-

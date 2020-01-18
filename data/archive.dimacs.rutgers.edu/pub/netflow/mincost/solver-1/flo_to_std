@@ -1,7 +1,0 @@
-
-
-case $# in
-0|1)	echo "Usage: flo_to_std NETFLO.OUT Outfile"; exit 1
-esac
-
-awk -f flo_to_std.a <$1 | sort  +0 -1 | awk -f del_dup.a >$2 
