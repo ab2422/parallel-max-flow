@@ -1,0 +1,63 @@
+Command:        mpirun -np 9 -x UCX_LOG_LEVEL=error ./main network/gridgen/grid-1000-unif
+Resources:      9 nodes (36 physical, 36 logical cores per node)
+Memory:         187 GiB per node
+Tasks:          9 processes
+Machine:        gl3046.arc-ts.umich.edu
+Start time:     Sun Jan 19 2020 15:52:21 (UTC-05)
+Total time:     1 second
+Full path:      /home/annabro/parallel-max-flow
+
+Summary: main is MPI-bound in this configuration
+Compute:                                      2.0% ||
+MPI:                                         96.0% |=========|
+I/O:                                          2.0% ||
+This application run was MPI-bound. A breakdown of this time and advice for investigating further is in the MPI section below. 
+
+CPU:
+A breakdown of the 2.0% CPU time:
+Scalar numeric ops:                           0.0% |
+Vector numeric ops:                           0.0% |
+Memory accesses:                            100.0% |=========|
+The per-core performance is memory-bound. Use a profiler to identify time-consuming loops and check their cache performance.
+No time is spent in vectorized instructions. Check the compiler's vectorization advice to see why key loops could not be vectorized.
+
+MPI:
+A breakdown of the 96.0% MPI time:
+Time in collective calls:                    18.9% |=|
+Time in point-to-point calls:                81.1% |=======|
+Effective process collective rate:            1.72 kB/s
+Effective process point-to-point rate:         239 kB/s
+Most of the time is spent in point-to-point calls with a very low transfer rate. This suggests load imbalance is causing synchronization overhead; use an MPI profiler to investigate.
+
+I/O:
+A breakdown of the 2.0% I/O time:
+Time in reads:                                0.0% |
+Time in writes:                             100.0% |=========|
+Effective process read rate:                  0.00 bytes/s
+Effective process write rate:                 1.55 MB/s
+Most of the time is spent in write operations with a very low effective transfer rate. This may be caused by contention for the filesystem or inefficient access patterns. Use an I/O profiler to investigate which write calls are affected.
+
+Threads:
+A breakdown of how multiple threads were used:
+Computation:                                 95.9% |=========|
+Synchronization:                              4.1% ||
+Physical core utilization:                    2.7% ||
+System load:                                 14.5% ||
+Physical core utilization is low. Try increasing the number of threads or processes to improve performance.
+
+Memory:
+Per-process memory usage may also affect scaling:
+Mean process memory usage:                     144 MiB
+Peak process memory usage:                     144 MiB
+Peak node memory usage:                      29.0% |==|
+The peak node memory usage is very low. Running with fewer MPI processes and more data on each process may be more efficient.
+
+Energy:
+A breakdown of how the 0.0263 Wh was used:
+CPU:                                        100.0% |=========|
+System:                                   not supported
+Mean node power:                          not supported
+Peak node power:                              0.00 W
+The whole system energy has been calculated using the CPU energy usage.
+System power metrics: No Arm IPMI Energy Agent config file found in /var/spool/ipmi-energy-agent. Did you start the Arm IPMI Energy Agent?
+
