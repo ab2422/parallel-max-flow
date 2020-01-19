@@ -113,7 +113,7 @@ network parse(string filename, int rank, int size){
         while (getline(file, line)){
             if (line[0]=='p'){
                 if (!((line[1]==' ')&&(line[2]=='m')&&(line[3]=='a')&&(line[4]=='x')&&(line[5]==' '))) {
-                    //return 0;
+                    cout << "Invalid file format! Bad line is: " << line << endl;
                 } else {
                     i=6;
                     net.n = atoi( &(line[6]));
