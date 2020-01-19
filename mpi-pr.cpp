@@ -228,6 +228,7 @@ network parse(string filename, int rank, int size){
                     MPI_Wait(&rreq, MPI_STATUS_IGNORE);
                     jv = rbuf;
 		    */
+                    net.adj[1][w-rank*npp].push_back(v);
                     net.adj[1][w-rank*npp].push_back(rbuf);
 
                 }
@@ -247,6 +248,8 @@ network parse(string filename, int rank, int size){
         (net.adj[0][j]).shrink_to_fit();
         (net.adj[1][j]).shrink_to_fit();
         net.cap[j].shrink_to_fit();
+        assert(( (net.adj[0][j].size())%2 == 0)); 
+        assert(( (net.adj[1][j].size())%2 == 0));
     }
 
     //print_vector(net.adj[1][60000-rank*net.std_npp]);

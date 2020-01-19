@@ -354,14 +354,15 @@ void listen(resgraph *net, comm_data *cd, int rank, int size){
 
 
 
-void check_comm_helper(resgraph *net, int v, int dir, int incount, int arr_of_inds[], comm_data *cd, int rank, int size){
+void check_comm_helper(resgraph *net, int v, int dir, int incount, comm_data *cd, int rank, int size){
     int outcount = 0;
     int j, bi, w;
-    MPI_Testsome(incount,cd->edge_req[dir][v], &outcount, arr_of_inds,MPI_STATUSES_IGNORE);
+    // TODO find error here
+    MPI_Testsome(incount,cd->edge_req[dir][v], &outcount, cd->arr_of_inds,MPI_STATUSES_IGNORE);
     // remember: aflows are positive & bflows are neg, hence the signs working out!
     if (outcount != MPI_UNDEFINED){
         for (int i=0; i<outcount; i++){
-            j = arr_of_inds[i];
+            j = cd->arr_of_inds[i];
             bi = cd->edge_bi[dir][v][j]; //what buffer are we using?
             w = net->adj[dir][v][2*j];
             handle_comm(net, v, w, dir, j, cd, rank,size);
@@ -373,9 +374,9 @@ void check_comm_helper(resgraph *net, int v, int dir, int incount, int arr_of_in
 
 void check_comm(resgraph *net, int v, comm_data *cd, int rank, int size){
     // for requests we point out to
-    check_comm_helper(net, v, 0, net->odeg[v], cd->arr_of_inds,cd, rank,size);
+    check_comm_helper(net, v, 0, net->odeg[v], cd, rank,size);
 
     // for requests pointing in to us
-    check_comm_helper(net, v, 1, net->ideg[v], cd->arr_of_inds, cd, rank,size);
+    check_comm_helper(net, v, 1, net->ideg[v], cd, rank,size);
         
 }

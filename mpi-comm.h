@@ -31,9 +31,8 @@ void handle_comm(resgraph *net, int v, int gl_w, int dir, int j, comm_data *cd, 
 /*
  * Checks status of all planned communications in direction dir involving v.
  * Incount is the number of possible such communications.
- * arr_of_inds is purely local, but since (possibly) large is stored in cd
  */
-void check_comm_helper(resgraph *net, int v, int dir, int incount, int arr_of_inds[], comm_data *cd, int rank, int size);
+void check_comm_helper(resgraph *net, int v, int dir, int incount, comm_data *cd, int rank, int size);
 
 /*
  * Checks status of all pending "planned" communications, 
