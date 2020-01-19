@@ -712,7 +712,7 @@ void output()
     break;
   }
 
-  fprintf(outfile,"p min %d %d\n",n_node,n_arc);
+  fprintf(outfile,"p max %d %d\n",n_node,n_arc);
 
   /* Output "n node supply" */
   for (i=0,imb_ptr=source_list;i<n_source;i++,imb_ptr++)

@@ -7,7 +7,7 @@ c avg. degree 8
 c supply 100000
 c arc costs: UNIFORM distr. min 0 max 2000
 c arc caps :  UNIFORM distr. min 20 max 2000
-p min 1001 8008
+p max 1001 8008
 n 622 s
 n 824 t
 a 1 2 1221

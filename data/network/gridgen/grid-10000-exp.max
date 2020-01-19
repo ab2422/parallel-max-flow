@@ -7,7 +7,7 @@ c avg. degree 8
 c supply 100000
 c arc costs: UNIFORM distr. min 0 max 2000
 c arc caps :  EXPONENTIAL distr. 3 lambda 0
-p min 10001 80008
+p max 10001 80008
 n 152 s
 n 4999 t
 a 1 2 215
