@@ -28,21 +28,16 @@ string infile = init_str+test+".max";
 string outfile = init_str+test+"my.soln";
 cout << infile << endl;
 
-cout << "Int size: " << sizeof(int) << endl;
-int mpint_size;
-MPI_Type_size(MPI_INT, &mpint_size);
-cout << "MPI_INT size: " << mpint_size << endl;
-
 //wait_for_debugger();
 double start = MPI_Wtime();
 network net = parse(infile, rank, size);
 
 double parse_t = MPI_Wtime();
-//resgraph graph = setup(&net, rank, size);
+resgraph graph = setup(&net, rank, size);
 double setup_t = MPI_Wtime();
-//comm_data cds = setup_cd(&graph, rank, size);
+comm_data cds = setup_cd(&graph, rank, size);
 double setup_cd_t = MPI_Wtime();
-//async_pr(&graph, &cds, rank,size);
+async_pr(&graph, &cds, rank,size);
 
 double end = MPI_Wtime();
 double total_parse = parse_t-start;
@@ -58,10 +53,10 @@ double total = end-start;
 
 printf("Elapsed time on Processor %d:\n  Parse: %f sec, Setup: %f sec, \n  CD Setup: %f sec, Algo: %f sec\n", rank, total_parse, total_setup, total_cd, total_algo);
 
-//print_total(&graph,rank);
+print_total(&graph,rank);
 //print_flow(&graph, rank);
 
-//cleanup(&graph,&net,&cds);
+cleanup(&graph,&net,&cds);
 
 
 //check(init_str+test+".soln", outfile);

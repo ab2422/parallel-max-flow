@@ -252,7 +252,7 @@ network parse(string filename, int rank, int size){
         net.cap[j].shrink_to_fit();
     }
 
-    print_vector(net.adj[1][60000-rank*net.std_npp]);
+    //print_vector(net.adj[1][60000-rank*net.std_npp]);
  
     
     return net;

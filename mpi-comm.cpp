@@ -232,13 +232,13 @@ void handle_finish(resgraph *net, comm_data *cd, int rank, int size){
                 MPI_Recv(&(cd->nxt_total), 1, MPI_INT, f_prev, F_RING, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 if (cd->prev_total==cd->nxt_total){
                     // we're done! no one has restarted & finished again since our first ring.
-                    f_done=1;
+                    cd->all_done=1;
                     for (int j=0; j<size; j++){
                         if (j!=rank){
-                            MPI_Isend(&(f_done), 1, MPI_CXX_BOOL, j, FINISH, MPI_COMM_WORLD, &(cd->fin_req[j]));
+                            MPI_Isend(&(cd->all_done), 1, MPI_CXX_BOOL, j, FINISH, MPI_COMM_WORLD, &(cd->fin_req[j]));
                         }
                     }
-                    cd->ring_stat=3;
+                    MPI_Waitall(size, cd->fin_req, MPI_STATUSES_IGNORE);
                     
                 } else {
                     // looks like some stuff has happened, let's restart
@@ -246,10 +246,7 @@ void handle_finish(resgraph *net, comm_data *cd, int rank, int size){
                 }
             }
 
-        } else if (cd->proc_done[rank]) {
-            //so ring_stat==3, we'll finish as soon as our sends are done
-            MPI_Testall(size, cd->fin_req, &(cd->all_done), MPI_STATUSES_IGNORE);                    
-        }
+        } 
     } else {
         MPI_Iprobe(f_prev, F_RING, MPI_COMM_WORLD, &f_tst, MPI_STATUS_IGNORE);
         if (f_tst){
