@@ -19,7 +19,8 @@ using namespace std;
 #define min(a,b) ( ((a)<(b)) ? (a) : (b) )
 #define w_in(w,npp) ( (rank*(npp) <= (w)) && ((w) < ((rank+1)*(npp))) )
 
-#define MAX_TAG 500
+#define MAX_TAG 32767
+#define INIT_ADJ 52
 // prev MAX_TAG 32767
 
 bool is_src_loc(resgraph *net, int loc_v, int rank, int size){
@@ -37,6 +38,15 @@ void wait_for_debugger(){
     printf("PID %d on %s ready for attach\n", getpid(), hostname);
     fflush(stdout);
     while (0 == i){}
+}
+
+void print_vector(vector<int> vec){
+    string line = "Size: "+ to_string(vec.size())+ ", Elems: ";
+    for (int i=0; i<vec.size(); i++){
+        line = line + to_string(vec[i]) + " ";
+    }
+    line  = line + "\n";
+    cout << (line);
 }
 
 void print_flow(resgraph *net, int rank){
@@ -171,7 +181,7 @@ network parse(string filename, int rank, int size){
                 }
                 cap = atoi(&(line[i]));
                 win = (( (rank*npp<=w) && (w < (rank+1)*npp) ));
-                tag = (v+w)%MAX_TAG;
+                tag = INIT_ADJ;//((v%MAX_TAG)*(w%MAX_TAG)+w)%MAX_TAG;
                 // if vin: 
                 if (((rank*npp)<=v) && (v < (rank+1)*npp)){
                     net.odeg[v-rank*npp]++;
@@ -182,32 +192,49 @@ network parse(string filename, int rank, int size){
                         net.ideg[w-rank*npp]++;
                         jw = net.adj[1][w-rank*npp].size();
                         
-                       net.adj[0][v-rank*npp].push_back(jw); //jw = v pos in w list
+                        net.adj[0][v-rank*npp].push_back(jw); //jw = v pos in w list
         
                         net.adj[1][w-rank*npp].push_back(v); // bacwards edge
                         net.adj[1][w-rank*npp].push_back(jv); //jv = w pos in v list
                     }else{
+                        sbuf = jv;
+			MPI_Sendrecv(&sbuf,1,MPI_INT, w/net.std_npp,tag,&rbuf, 1, MPI_INT, w/net.std_npp,tag,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			/*
                         MPI_Irecv(&rbuf,1,MPI_INT, w/net.std_npp, tag, MPI_COMM_WORLD, &rreq);
                         // wait for prev send to finish, so know sbuf avail
-                        MPI_Wait(&sreq, &sstat);
+                        MPI_Wait(&sreq, MPI_STATUS_IGNORE);
                         sbuf = jv;
                         MPI_Isend(&sbuf, 1, MPI_INT, w/net.std_npp, tag, MPI_COMM_WORLD,&sreq);
                         // wait for curr rec to finish, so can use data
-                        MPI_Wait(&rreq, &rstat);
-
+                        MPI_Wait(&rreq,MPI_STATUS_IGNORE);
+			*/
                         net.adj[0][v-rank*npp].push_back(rbuf); 
+			if (w==32766){
+				printf("32766: Sent: %d, Received: %d\n", sbuf, rbuf);
+			}
                     }
                 } else if (win) {
-                    MPI_Irecv(&rbuf,1,MPI_INT,v/npp, tag, MPI_COMM_WORLD, &rreq);
                     net.ideg[w-rank*npp]++;
+		    jw = net.adj[1][w-rank*net.std_npp].size();
+		    sbuf = jw;
+                    MPI_Sendrecv(&sbuf,1,MPI_INT, v/net.std_npp, tag, &rbuf,1,MPI_INT,v/net.std_npp, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		    /* 
+                    MPI_Irecv(&rbuf,1,MPI_INT,v/npp, tag, MPI_COMM_WORLD, &rreq);
                     jw = net.adj[1][w-rank*npp].size(); // pos of v in w's
                     net.adj[1][w-rank*npp].push_back(v);
-                    MPI_Wait(&sreq, &sstat);
+                    if ( (w< 10+net.std_npp)&&(v==0)){
+			printf("Curr %d, to src, Deg: %d, jw: %d\n", w,net.ideg[w-rank*npp], jw);
+		    }
+                    MPI_Wait(&sreq, MPI_STATUS_IGNORE);
                     sbuf = jw;
                     MPI_Isend(&sbuf,1,MPI_INT, v/npp, tag, MPI_COMM_WORLD, &rreq);
-                    MPI_Wait(&rreq, &rstat);
+                    MPI_Wait(&rreq, MPI_STATUS_IGNORE);
                     jv = rbuf;
+		    */
                     net.adj[1][w-rank*npp].push_back(rbuf);
+			if (w==32766){
+				printf("0: Sent: %d, Received: %d\n", sbuf, rbuf);
+			}
 
                 }
             } else if (line[0]!='c'){
@@ -225,9 +252,8 @@ network parse(string filename, int rank, int size){
         net.cap[j].shrink_to_fit();
     }
 
-    // deal w/ pending MPI_Sends...
-    MPI_Wait(&sreq,&sstat);
-
+    print_vector(net.adj[1][32764-rank*net.std_npp]);
+ 
     
     return net;
 }
@@ -309,15 +335,15 @@ resgraph setup(network *inet, int rank, int size){
 
         for (int i=1; i< size; i++){
             //printf("sending to %d, from proc %d\n", i, rank);
-            MPI_Send(&num_sent,1,MPI_INT,i,i,MPI_COMM_WORLD);
+            //MPI_Send(&num_sent,1,MPI_INT,i,i,MPI_COMM_WORLD);
         }
     } else {
         onet.n_act = 0;
         //printf("recv on proc %d\n",rank);
-        MPI_Recv(&num_sent,1,MPI_INT,onet.s_proc,rank,MPI_COMM_WORLD, &rstat);
+        //MPI_Recv(&num_sent,1,MPI_INT,onet.s_proc,rank,MPI_COMM_WORLD, &rstat);
     }
 
-    //MPI_Bcast(&num_sent, 1, MPI_INT, onet.s_proc, MPI_COMM_WORLD);
+    MPI_Bcast(&num_sent, 1, MPI_INT, onet.s_proc, MPI_COMM_WORLD);
     
     int buffer[num_sent*3];
     int count=0;
@@ -345,11 +371,11 @@ resgraph setup(network *inet, int rank, int size){
             c = buffer[3*i+1];
             jw = buffer[3*i+2];
             if ((w_in(gl_w,onet.std_npp))){
-                if ( (jw/2>onet.ideg[loc_w]) || jw<0){
+                if ( (jw/2>onet.ideg[loc_w]) || (jw<0)){
                     printf("w: %d, jw: %d, indeg: %d, proc: %d\n", gl_w, jw, onet.ideg[loc_w], rank);
             }    
-                onet.flow[1][loc_w][jw/2]=-c;
                 onet.ex[loc_w]=c;
+                onet.flow[1][loc_w][jw/2]=-c;
                 if (gl_w != onet.sink){
                     onet.n_act +=1;
                     onet.active.push(gl_w);

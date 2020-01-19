@@ -38,7 +38,7 @@ void Banner4()
   printf("p max %d %d\n",num_nodes,num_arcs);
   printf("n %d s\n",source);
   printf("n %d t\n",sink);
-  printf("s %d\n", input_seed);
+  printf("c %d\n", input_seed);
 }
 
 void AcyclicNet1()
