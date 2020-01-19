@@ -209,9 +209,6 @@ network parse(string filename, int rank, int size){
                         MPI_Wait(&rreq,MPI_STATUS_IGNORE);
 			*/
                         net.adj[0][v-rank*npp].push_back(rbuf); 
-			if (w==110500){
-				printf("32766: Sent: %d, Received: %d\n", sbuf, rbuf);
-			}
                     }
                 } else if (win) {
                     net.ideg[w-rank*npp]++;
@@ -232,9 +229,6 @@ network parse(string filename, int rank, int size){
                     jv = rbuf;
 		    */
                     net.adj[1][w-rank*npp].push_back(rbuf);
-			if (w==110500){
-				printf("0: Sent: %d, Received: %d\n", sbuf, rbuf);
-			}
 
                 }
             } else if (line[0]!='c'){
@@ -245,6 +239,9 @@ network parse(string filename, int rank, int size){
     } else {
         cerr << "File open error: " << strerror(errno) << endl;
     }
+
+    printf("adj size: %d, on proc %d\n", net.adj.size(),rank);
+    printf("Adj[0] size: %d, Adj[1] size: %d, on proc %d\n", net.adj[0].size(), net.adj[1].size(), rank);
 
     for (int j=0; j< (net.npp); j++){ 
         (net.adj[0][j]).shrink_to_fit();

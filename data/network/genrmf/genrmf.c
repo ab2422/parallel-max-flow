@@ -60,6 +60,7 @@ ZOR - Methods & Models of OR (1989) 33:383-403
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "gen_maxflow_typedef.h"
 #include "genio.h"
 #include "math_to_gcc.h"
