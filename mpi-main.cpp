@@ -26,8 +26,9 @@ string init_str = "data/";
 //string init_str = "parallel-max-flow/data/";
 string infile = init_str+test+".max";
 string outfile = init_str+test+"my.soln";
-cout << infile << endl;
-
+if (rank==0){
+    cout << infile << endl;
+}
 //wait_for_debugger();
 double start = MPI_Wtime();
 network net = parse(infile, rank, size);
@@ -38,6 +39,12 @@ double setup_t = MPI_Wtime();
 comm_data cds = setup_cd(&graph, rank, size);
 double setup_cd_t = MPI_Wtime();
 async_pr(&graph, &cds, rank,size);
+
+for (int i=0; i<100; i++){
+    graph = setup (&net, rank,size);
+    cds = setup_cd(&graph,rank,size);
+    async_pr(&graph, &cds,rank,size);
+}
 
 double end = MPI_Wtime();
 double total_parse = parse_t-start;

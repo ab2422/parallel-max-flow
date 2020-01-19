@@ -331,10 +331,11 @@ resgraph setup(network *inet, int rank, int size){
         }
         onet.hght[s] = onet.n;
 
-        for (int i=1; i< size; i++){
+        //for (int i=1; i< size; i++){
             //printf("sending to %d, from proc %d\n", i, rank);
             //MPI_Send(&num_sent,1,MPI_INT,i,i,MPI_COMM_WORLD);
-        }
+        //}
+        assert(num_sent <= onet.odeg[s]);
     } else {
         onet.n_act = 0;
         //printf("recv on proc %d\n",rank);
@@ -370,7 +371,7 @@ resgraph setup(network *inet, int rank, int size){
             jw = buffer[3*i+2];
             if ((w_in(gl_w,onet.std_npp))){
                 if ( (jw/2>onet.ideg[loc_w]) || (jw<0)){
-                    printf("w: %d, jw: %d, indeg: %d, proc: %d\n", gl_w, jw, onet.ideg[loc_w], rank);
+                    printf("w: %d, jw: %d, indeg: %d, i: %d, proc: %d\n", gl_w, jw, onet.ideg[loc_w], i,rank);
             }    
                 onet.ex[loc_w]=c;
                 onet.flow[1][loc_w][jw/2]=-c;
