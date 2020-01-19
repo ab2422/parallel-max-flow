@@ -209,7 +209,7 @@ network parse(string filename, int rank, int size){
                         MPI_Wait(&rreq,MPI_STATUS_IGNORE);
 			*/
                         net.adj[0][v-rank*npp].push_back(rbuf); 
-			if (w==32766){
+			if (w==110500){
 				printf("32766: Sent: %d, Received: %d\n", sbuf, rbuf);
 			}
                     }
@@ -232,7 +232,7 @@ network parse(string filename, int rank, int size){
                     jv = rbuf;
 		    */
                     net.adj[1][w-rank*npp].push_back(rbuf);
-			if (w==32766){
+			if (w==110500){
 				printf("0: Sent: %d, Received: %d\n", sbuf, rbuf);
 			}
 
@@ -252,7 +252,7 @@ network parse(string filename, int rank, int size){
         net.cap[j].shrink_to_fit();
     }
 
-    print_vector(net.adj[1][32764-rank*net.std_npp]);
+    print_vector(net.adj[1][60000-rank*net.std_npp]);
  
     
     return net;

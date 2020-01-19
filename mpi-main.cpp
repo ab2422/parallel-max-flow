@@ -38,7 +38,7 @@ double start = MPI_Wtime();
 network net = parse(infile, rank, size);
 
 double parse_t = MPI_Wtime();
-resgraph graph = setup(&net, rank, size);
+//resgraph graph = setup(&net, rank, size);
 double setup_t = MPI_Wtime();
 //comm_data cds = setup_cd(&graph, rank, size);
 double setup_cd_t = MPI_Wtime();
