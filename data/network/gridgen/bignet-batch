@@ -1,0 +1,33 @@
+2            This batch file generates two networks
+grid-2000000-unif.max     output file name of the second network
+0            no two-way arcs
+87654321     random number seed
+2000000          # of nodes
+# this is a comment line
+900           grid width
+1           # of source ndoes
+1           # of sink nodess
+12            average degree
+100000       total flow
+1            distribution of arc costs, 1 for UNIFORM
+0            1st parameter for arc cost (float): lower bound
+2000         2nd parameter for arc cost (float): upper bound
+1            distribution of arc capacities, 1 for UNIFORM
+1           1st parameter for arc capacity (float): lower bound
+300
+
+grid-2000000-exp.max     output file name of the second network
+0            no two-way arcs
+87654321     random number seed
+2000000          # of nodes
+# this is a comment line
+900           grid width
+1           # of source ndoes
+1           # of sink nodess
+12           average degree
+100000       total flow
+1            distribution of arc costs, 1 for UNIFORM
+0            1st parameter for arc cost (float): lower bound
+2000         2nd parameter for arc cost (float): upper bound
+2            distribution of arc capacities, 1 for UNIFORM
+5          1st parameter for arc capacity (float): lower bound

@@ -146,6 +146,7 @@ Bugs and comments: Please direct bugs and comments to yusin@athena.mit.edu
 ********************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
@@ -240,7 +241,7 @@ struct arcs *arc_list=NULL; /* head of the arc list array.  Arcs in this
 			       arcs to/from super node, and other arcs */
 
 /*------------------------------ program -------------------------------*/
-main(argc,argv)
+void main(argc,argv)
   int argc;
   char **argv;
 {
@@ -715,16 +716,16 @@ void output()
 
   /* Output "n node supply" */
   for (i=0,imb_ptr=source_list;i<n_source;i++,imb_ptr++)
-    fprintf(outfile, "n %d %d\n", imb_ptr->node, imb_ptr->supply);
+    fprintf(outfile, "n %d s\n", imb_ptr->node);//, imb_ptr->supply);
 
   for (i=0,imb_ptr=sink_list;i<n_sink;i++,imb_ptr++)
-    fprintf(outfile, "n %d %d\n", imb_ptr->node, imb_ptr->supply);
+    fprintf(outfile, "n %d t\n", imb_ptr->node);//, imb_ptr->supply);
 
   /* Output "a from to lowcap=0 hicap cost" */
   for (i = 0,arc_ptr = arc_list;i<n_arc;i++,arc_ptr++)
   {
-    fprintf(outfile,"a %d %d 0 %d %d\n",arc_ptr->from,arc_ptr->to,
-                                         arc_ptr->u, arc_ptr->cost);
+    fprintf(outfile,"a %d %d %d\n",arc_ptr->from,arc_ptr->to,
+                                         arc_ptr->u);
   }
 
   if (outfile != stdout) fclose(outfile);
