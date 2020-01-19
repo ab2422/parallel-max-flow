@@ -241,15 +241,12 @@ network parse(string filename, int rank, int size){
         cerr << "File open error: " << strerror(errno) << endl;
     }
 
-    printf("adj size: %d, on proc %d\n", net.adj.size(),rank);
-    printf("Adj[0] size: %d, Adj[1] size: %d, on proc %d\n", net.adj[0].size(), net.adj[1].size(), rank);
-
     for (int j=0; j< (net.npp); j++){ 
         (net.adj[0][j]).shrink_to_fit();
         (net.adj[1][j]).shrink_to_fit();
         net.cap[j].shrink_to_fit();
-        assert(( (net.adj[0][j].size())%2 == 0)); 
-        assert(( (net.adj[1][j].size())%2 == 0));
+        assert(( (net.adj[0][j].size()) == 2*net.odeg[j])); 
+        assert(( (net.adj[1][j].size()) == 2*net.ideg[j]));
     }
 
     //print_vector(net.adj[1][60000-rank*net.std_npp]);
@@ -325,7 +322,7 @@ resgraph setup(network *inet, int rank, int size){
                 onet.adj_d[1][loc_w][jw/2] = onet.n;
                 if (gl_w != onet.sink) {
                     onet.n_act += 1;
-                    onet.active.push(gl_w);
+                    onet.active.push(loc_w);
                 }
             } else {
                 num_sent++;
@@ -378,7 +375,7 @@ resgraph setup(network *inet, int rank, int size){
                 onet.flow[1][loc_w][jw/2]=-c;
                 if (gl_w != onet.sink){
                     onet.n_act +=1;
-                    onet.active.push(gl_w);
+                    onet.active.push(loc_w);
                 }
             }
         }

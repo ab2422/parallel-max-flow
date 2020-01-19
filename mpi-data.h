@@ -44,6 +44,7 @@ struct resgraph : public network {
     std::vector<std::vector<std::vector<int>>> adj_d;
 
     int n_act;
+    // active is in LOCAL coordinates
     std::queue<int> active;
     std::queue<int> active_p;
 };
