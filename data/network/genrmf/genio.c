@@ -10,6 +10,7 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "gen_maxflow_typedef.h"
 #include "genio.h"
 
