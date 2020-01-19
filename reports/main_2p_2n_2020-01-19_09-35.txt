@@ -1,0 +1,62 @@
+Command:        mpirun -n 2 -x UCX_LOG_LEVEL=error ./main basic-net
+Resources:      2 nodes (36 physical, 36 logical cores per node)
+Memory:         187 GiB per node
+Tasks:          2 processes
+Machine:        gl3014.arc-ts.umich.edu
+Start time:     Sun Jan 19 2020 09:35:02 (UTC-05)
+Total time:     1 second
+Full path:      /home/annabro/parallel-max-flow
+
+Summary: main is MPI-bound in this configuration
+Compute:                                      0.0% |
+MPI:                                        100.0% |=========|
+I/O:                                          0.0% |
+This application run was MPI-bound. A breakdown of this time and advice for investigating further is in the MPI section below. 
+
+CPU:
+A breakdown of the 0.0% CPU time:
+Scalar numeric ops:                           0.0% |
+Vector numeric ops:                           0.0% |
+Memory accesses:                            100.0% |=========|
+No measurable time is spent in application code. Either this was an MPI or I/O benchmark, or something strange has happened; a debugger might be useful here!
+
+MPI:
+A breakdown of the 100.0% MPI time:
+Time in collective calls:                   100.0% |=========|
+Time in point-to-point calls:                 0.0% |
+Effective process collective rate:            0.00 bytes/s
+Effective process point-to-point rate:        0.00 bytes/s
+
+I/O:
+A breakdown of the 0.0% I/O time:
+Time in reads:                                0.0% |
+Time in writes:                               0.0% |
+Effective process read rate:                  0.00 bytes/s
+Effective process write rate:                 0.00 bytes/s
+No time is spent in I/O operations. There's nothing to optimize here!
+
+Threads:
+A breakdown of how multiple threads were used:
+Computation:                                  0.0% |
+Synchronization:                              0.0% |
+Physical core utilization:                    2.8% ||
+System load:                                 90.3% |========|
+No measurable time is spent in multithreaded code.
+Physical core utilization is low. Try increasing the number of processes to improve performance.
+
+Memory:
+Per-process memory usage may also affect scaling:
+Mean process memory usage:                     138 MiB
+Peak process memory usage:                     142 MiB
+Peak node memory usage:                      18.0% |=|
+The peak node memory usage is very low. Running with fewer MPI processes and more data on each process may be more efficient.
+
+Energy:
+A breakdown of how the 0.000657 Wh was used:
+CPU:                                        100.0% |=========|
+System:                                   not supported
+Mean node power:                          not supported
+Peak node power:                              0.00 W
+The whole system energy has been calculated using the CPU energy usage.
+System power metrics: No Arm IPMI Energy Agent config file found in /var/spool/ipmi-energy-agent. Did you start the Arm IPMI Energy Agent?
+

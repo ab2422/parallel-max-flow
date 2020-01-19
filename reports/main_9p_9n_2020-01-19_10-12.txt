@@ -1,0 +1,63 @@
+Command:        mpirun -np 9 -x UCX_LOG_LEVEL=error ./main network/genrmf/hundred-thousand
+Resources:      9 nodes (36 physical, 36 logical cores per node)
+Memory:         187 GiB per node
+Tasks:          9 processes
+Machine:        gl3153.arc-ts.umich.edu
+Start time:     Sun Jan 19 2020 10:12:10 (UTC-05)
+Total time:     1 second
+Full path:      /home/annabro/parallel-max-flow
+
+Summary: main is MPI-bound in this configuration
+Compute:                                     34.0% |==|
+MPI:                                         63.6% |=====|
+I/O:                                          2.5% ||
+This application run was MPI-bound. A breakdown of this time and advice for investigating further is in the MPI section below. 
+
+CPU:
+A breakdown of the 34.0% CPU time:
+Scalar numeric ops:                           1.4% ||
+Vector numeric ops:                           0.0% |
+Memory accesses:                             98.6% |=========|
+The per-core performance is memory-bound. Use a profiler to identify time-consuming loops and check their cache performance.
+No time is spent in vectorized instructions. Check the compiler's vectorization advice to see why key loops could not be vectorized.
+
+MPI:
+A breakdown of the 63.6% MPI time:
+Time in collective calls:                    12.6% ||
+Time in point-to-point calls:                87.4% |========|
+Effective process collective rate:             175 bytes/s
+Effective process point-to-point rate:         262 kB/s
+Most of the time is spent in point-to-point calls with a very low transfer rate. This suggests load imbalance is causing synchronization overhead; use an MPI profiler to investigate.
+
+I/O:
+A breakdown of the 2.5% I/O time:
+Time in reads:                               75.0% |======|
+Time in writes:                              25.0% |=|
+Effective process read rate:                  2.82 GB/s
+Effective process write rate:                  340 kB/s
+Most of the time is spent in read operations with a high effective transfer rate. It may be possible to achieve faster effective transfer rates using asynchronous file operations.
+
+Threads:
+A breakdown of how multiple threads were used:
+Computation:                                100.0% |=========|
+Synchronization:                              0.0% |
+Physical core utilization:                    2.7% ||
+System load:                                 19.5% |=|
+Physical core utilization is low. Try increasing the number of threads or processes to improve performance.
+
+Memory:
+Per-process memory usage may also affect scaling:
+Mean process memory usage:                     151 MiB
+Peak process memory usage:                     159 MiB
+Peak node memory usage:                      24.0% |=|
+The peak node memory usage is very low. Running with fewer MPI processes and more data on each process may be more efficient.
+
+Energy:
+A breakdown of how the 0.118 Wh was used:
+CPU:                                        100.0% |=========|
+System:                                   not supported
+Mean node power:                          not supported
+Peak node power:                              0.00 W
+The whole system energy has been calculated using the CPU energy usage.
+System power metrics: No Arm IPMI Energy Agent config file found in /var/spool/ipmi-energy-agent. Did you start the Arm IPMI Energy Agent?
+
