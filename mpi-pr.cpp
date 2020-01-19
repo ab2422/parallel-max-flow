@@ -181,7 +181,6 @@ network parse(string filename, int rank, int size){
                 }
                 cap = atoi(&(line[i]));
                 win = (( (rank*npp<=w) && (w < (rank+1)*npp) ));
-                tag = INIT_ADJ;//((v%MAX_TAG)*(w%MAX_TAG)+w)%MAX_TAG;
                 // if vin: 
                 if (((rank*npp)<=v) && (v < (rank+1)*npp)){
                     net.odeg[v-rank*npp]++;
@@ -198,8 +197,8 @@ network parse(string filename, int rank, int size){
                         net.adj[1][w-rank*npp].push_back(jv); //jv = w pos in v list
                     }else{
                         sbuf = jv;
-			MPI_Sendrecv(&sbuf,1,MPI_INT, w/net.std_npp,tag,&rbuf, 1, MPI_INT, w/net.std_npp,tag,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-			/*
+                        MPI_Sendrecv(&sbuf,1,MPI_INT, w/net.std_npp,INIT_ADJ,&rbuf, 1, MPI_INT, w/net.std_npp,INIT_ADJ,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                        /*
                         MPI_Irecv(&rbuf,1,MPI_INT, w/net.std_npp, tag, MPI_COMM_WORLD, &rreq);
                         // wait for prev send to finish, so know sbuf avail
                         MPI_Wait(&sreq, MPI_STATUS_IGNORE);
@@ -207,28 +206,30 @@ network parse(string filename, int rank, int size){
                         MPI_Isend(&sbuf, 1, MPI_INT, w/net.std_npp, tag, MPI_COMM_WORLD,&sreq);
                         // wait for curr rec to finish, so can use data
                         MPI_Wait(&rreq,MPI_STATUS_IGNORE);
-			*/
+                        */
+                        assert( (rbuf>=0) && (rbuf <= net.n*2));
                         net.adj[0][v-rank*npp].push_back(rbuf); 
                     }
                 } else if (win) {
                     net.ideg[w-rank*npp]++;
-		    jw = net.adj[1][w-rank*net.std_npp].size();
-		    sbuf = jw;
-                    MPI_Sendrecv(&sbuf,1,MPI_INT, v/net.std_npp, tag, &rbuf,1,MPI_INT,v/net.std_npp, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		    /* 
+                    jw = net.adj[1][w-rank*net.std_npp].size();
+		            sbuf = jw;
+                    MPI_Sendrecv(&sbuf,1,MPI_INT, v/net.std_npp, INIT_ADJ, &rbuf,1,MPI_INT,v/net.std_npp, INIT_ADJ, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    /* 
                     MPI_Irecv(&rbuf,1,MPI_INT,v/npp, tag, MPI_COMM_WORLD, &rreq);
                     jw = net.adj[1][w-rank*npp].size(); // pos of v in w's
                     net.adj[1][w-rank*npp].push_back(v);
                     if ( (w< 10+net.std_npp)&&(v==0)){
-			printf("Curr %d, to src, Deg: %d, jw: %d\n", w,net.ideg[w-rank*npp], jw);
-		    }
+                        printf("Curr %d, to src, Deg: %d, jw: %d\n", w,net.ideg[w-rank*npp], jw);
+                    }
                     MPI_Wait(&sreq, MPI_STATUS_IGNORE);
                     sbuf = jw;
                     MPI_Isend(&sbuf,1,MPI_INT, v/npp, tag, MPI_COMM_WORLD, &rreq);
                     MPI_Wait(&rreq, MPI_STATUS_IGNORE);
                     jv = rbuf;
-		    */
+                    */
                     net.adj[1][w-rank*npp].push_back(v);
+                    assert( (rbuf>=0) && (rbuf <= net.n*2));
                     net.adj[1][w-rank*npp].push_back(rbuf);
 
                 }
