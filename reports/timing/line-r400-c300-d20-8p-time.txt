@@ -1,0 +1,4 @@
+data/network/washington/line-r400-c300-d20.max
+Avg elapsed time over 100 runs, with 8 processors:
+  Parse: 0.663640 sec, Setup: 0.038709 sec, CD Setup: 0.074353 sec,
+  Algo: 0.259868 sec, Preprocess: 0.776702, Total: 1.036570
