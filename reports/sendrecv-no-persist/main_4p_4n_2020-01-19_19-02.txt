@@ -1,0 +1,65 @@
+Command:        mpirun -np 4 -x UCX_LOG_LEVEL=error ./main network/genrmf/hundred-thousand
+Resources:      4 nodes (36 physical, 36 logical cores per node)
+Memory:         187 GiB per node
+Tasks:          4 processes
+Machine:        gl3028.arc-ts.umich.edu
+Start time:     Sun Jan 19 2020 19:02:22 (UTC-05)
+Total time:     11 seconds
+Full path:      /home/annabro/parallel-max-flow
+
+Summary: main is Compute-bound in this configuration
+Compute:                                     82.1% |=======|
+MPI:                                         17.9% |=|
+I/O:                                          0.0% |
+This application run was Compute-bound. A breakdown of this time and advice for investigating further is in the CPU section below. 
+As little time is spent in MPI calls, this code may also benefit from running at larger scales.
+
+CPU:
+A breakdown of the 82.1% CPU time:
+Scalar numeric ops:                           5.0% ||
+Vector numeric ops:                           0.0% |
+Memory accesses:                             92.8% |========|
+The per-core performance is memory-bound. Use a profiler to identify time-consuming loops and check their cache performance.
+No time is spent in vectorized instructions. Check the compiler's vectorization advice to see why key loops could not be vectorized.
+
+MPI:
+A breakdown of the 17.9% MPI time:
+Time in collective calls:                    21.8% |=|
+Time in point-to-point calls:                78.2% |=======|
+Effective process collective rate:             901 bytes/s
+Effective process point-to-point rate:        20.9 kB/s
+Most of the time is spent in point-to-point calls with a very low transfer rate. This suggests load imbalance is causing synchronization overhead; use an MPI profiler to investigate.
+
+I/O:
+A breakdown of the 0.0% I/O time:
+Time in reads:                                0.0% |
+Time in writes:                               0.0% |
+Effective process read rate:                  0.00 bytes/s
+Effective process write rate:                 0.00 bytes/s
+No time is spent in I/O operations. There's nothing to optimize here!
+
+Threads:
+A breakdown of how multiple threads were used:
+Computation:                                 99.0% |=========|
+Synchronization:                              1.0% ||
+Physical core utilization:                    3.1% ||
+System load:                                 91.9% |========|
+Physical core utilization is low. Try increasing the number of threads or processes to improve performance.
+
+Memory:
+Per-process memory usage may also affect scaling:
+Mean process memory usage:                     587 MiB
+Peak process memory usage:                    1.04 GiB
+Peak node memory usage:                      26.0% |==|
+There is significant variation between peak and mean memory usage. This may be a sign of workload imbalance or a memory leak.
+The peak node memory usage is very low. Running with fewer MPI processes and more data on each process may be more efficient.
+
+Energy:
+A breakdown of how the 3.82 Wh was used:
+CPU:                                        100.0% |=========|
+System:                                   not supported
+Mean node power:                          not supported
+Peak node power:                              0.00 W
+The whole system energy has been calculated using the CPU energy usage.
+System power metrics: No Arm IPMI Energy Agent config file found in /var/spool/ipmi-energy-agent. Did you start the Arm IPMI Energy Agent?
+
