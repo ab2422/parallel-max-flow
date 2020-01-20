@@ -21,7 +21,6 @@ using namespace std;
 
 #define MAX_TAG 32767
 #define INIT_ADJ 52
-// prev MAX_TAG 32767
 
 bool is_src_loc(resgraph *net, int loc_v, int rank, int size){
     return  (net->s_proc == rank) && ( (loc_v +rank*net->std_npp) == net->src);
@@ -105,9 +104,14 @@ network parse(string filename, int rank, int size){
     int v,w,cap,f,jv,jw,tag;
     int rbuf = 0; // v,w,c(v,w), pos
     int sbuf = 0; // v,w,c(v,w), pos
-    MPI_Request sreq = MPI_REQUEST_NULL;
-    MPI_Request rreq = MPI_REQUEST_NULL;
-    MPI_Status sstat, rstat;
+    MPI_Request sreq[size];
+    MPI_Request rreq[size];
+    for (int p=0; p<size; p++){
+        if (p!=rank){
+            MPI_Send_init(&sbuf, 1, MPI_INT, p, INIT_ADJ, MPI_COMM_WORLD, &(sreq[p]));
+            MPI_Recv_init(&rbuf, 1, MPI_INT, p, INIT_ADJ, MPI_COMM_WORLD, &(rreq[p]));
+        }
+    }
     bool ready = 1;
     if (file.is_open()) {
         while (getline(file, line)){
@@ -196,41 +200,27 @@ network parse(string filename, int rank, int size){
                         net.adj[1][w-rank*npp].push_back(v); // bacwards edge
                         net.adj[1][w-rank*npp].push_back(jv); //jv = w pos in v list
                     }else{
+                        MPI_Start(&(rreq[w/net.std_npp]));
                         sbuf = jv;
-                        MPI_Sendrecv(&sbuf,1,MPI_INT, w/net.std_npp,INIT_ADJ,&rbuf, 1, MPI_INT, w/net.std_npp,INIT_ADJ,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                        /*
-                        MPI_Irecv(&rbuf,1,MPI_INT, w/net.std_npp, tag, MPI_COMM_WORLD, &rreq);
-                        // wait for prev send to finish, so know sbuf avail
-                        MPI_Wait(&sreq, MPI_STATUS_IGNORE);
-                        sbuf = jv;
-                        MPI_Isend(&sbuf, 1, MPI_INT, w/net.std_npp, tag, MPI_COMM_WORLD,&sreq);
-                        // wait for curr rec to finish, so can use data
-                        MPI_Wait(&rreq,MPI_STATUS_IGNORE);
-                        */
+                        MPI_Start(&(sreq[w/net.std_npp]));
+
+                        MPI_Wait(&(rreq[w/net.std_npp]), MPI_STATUS_IGNORE);
                         assert( (rbuf>=0) && (rbuf <= net.n*2));
                         net.adj[0][v-rank*npp].push_back(rbuf); 
+                        MPI_Wait(&(sreq[w/net.std_npp]), MPI_STATUS_IGNORE);
                     }
                 } else if (win) {
+                    MPI_Start(&(rreq[v/net.std_npp]));
                     net.ideg[w-rank*npp]++;
                     jw = net.adj[1][w-rank*net.std_npp].size();
 		            sbuf = jw;
-                    MPI_Sendrecv(&sbuf,1,MPI_INT, v/net.std_npp, INIT_ADJ, &rbuf,1,MPI_INT,v/net.std_npp, INIT_ADJ, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                    /* 
-                    MPI_Irecv(&rbuf,1,MPI_INT,v/npp, tag, MPI_COMM_WORLD, &rreq);
-                    jw = net.adj[1][w-rank*npp].size(); // pos of v in w's
+                    MPI_Start(&(sreq[v/net.std_npp]));
                     net.adj[1][w-rank*npp].push_back(v);
-                    if ( (w< 10+net.std_npp)&&(v==0)){
-                        printf("Curr %d, to src, Deg: %d, jw: %d\n", w,net.ideg[w-rank*npp], jw);
-                    }
-                    MPI_Wait(&sreq, MPI_STATUS_IGNORE);
-                    sbuf = jw;
-                    MPI_Isend(&sbuf,1,MPI_INT, v/npp, tag, MPI_COMM_WORLD, &rreq);
-                    MPI_Wait(&rreq, MPI_STATUS_IGNORE);
-                    jv = rbuf;
-                    */
-                    net.adj[1][w-rank*npp].push_back(v);
+
+                    MPI_Wait(&(rreq[v/net.std_npp]), MPI_STATUS_IGNORE);
                     assert( (rbuf>=0) && (rbuf <= net.n*2));
                     net.adj[1][w-rank*npp].push_back(rbuf);
+                    MPI_Wait(&(sreq[v/net.std_npp]), MPI_STATUS_IGNORE);
 
                 }
             } else if (line[0]!='c'){
@@ -240,6 +230,13 @@ network parse(string filename, int rank, int size){
         file.close();
     } else {
         cerr << "File open error: " << strerror(errno) << endl;
+    }
+
+    for (int p=0; p< size; p++){
+        if (p!=rank){
+            MPI_Request_free(&(sreq[p]));
+            MPI_Request_free(&(rreq[p]));
+        }
     }
 
     for (int j=0; j< (net.npp); j++){ 
