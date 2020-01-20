@@ -37,6 +37,9 @@ comm_data cds;
 
 double prev_time=0, curr_time=0, parse_t=0, setup_t=0, setup_cd_t=0, algo_t;
 int num_runs=100;
+if (argc >= 3){
+    num_runs=(int) strtol(argv[2], NULL, 10);
+}
 curr_time=MPI_Wtime();
 prev_time = curr_time;
 

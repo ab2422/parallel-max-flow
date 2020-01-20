@@ -32,13 +32,13 @@ if (rank==0){
 //wait_for_debugger();
 double start = MPI_Wtime();
 network net = parse(infile, rank, size);
-printf("done parse\n");
+//printf("done parse\n");
 double parse_t = MPI_Wtime();
 resgraph graph = setup(&net, rank, size);
-printf("done setup\n");
+//printf("done setup\n");
 double setup_t = MPI_Wtime();
 comm_data cds = setup_cd(&graph, rank, size);
-printf("done comm setup\n");
+//printf("done comm setup\n");
 double setup_cd_t = MPI_Wtime();
 async_pr(&graph, &cds, rank,size);
 

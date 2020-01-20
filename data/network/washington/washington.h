@@ -9,7 +9,7 @@
 #define TRUE       1
 
 
-#define MAX_N     20000  
+#define MAX_N     200000  
 /* #define MAX_N 60 */
 
 #define MAX_CAP   100000000
