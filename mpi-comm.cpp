@@ -5,7 +5,7 @@
 #include <queue>
 #include "mpi-comm.h"
 #include "mpi-pr.h"
-//#define NDEBUG
+#define NDEBUG
 #include <assert.h>
 using namespace std;
 

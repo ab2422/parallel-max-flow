@@ -1,0 +1,4 @@
+data/network/genrmf/hundred-thousand.max
+Avg elapsed time over 100 runs, with 8 processors:
+  Parse: 0.126916 sec, Setup: 0.017222 sec, CD Setup: 0.032240 sec,
+  Algo: 0.029194 sec, Preprocess: 0.176378, Total: 0.205572

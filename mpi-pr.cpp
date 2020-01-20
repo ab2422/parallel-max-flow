@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <vector>
 #include <queue>
-//#define NDEBUG
+#define NDEBUG
 #include <assert.h>
 using namespace std;
 
