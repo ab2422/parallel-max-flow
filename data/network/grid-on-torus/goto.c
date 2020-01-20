@@ -17,6 +17,7 @@
 
 #include <values.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 /* for random number generator */
@@ -136,7 +137,7 @@ long dist;
   }
 }
 
-build_example(X,Y,XDEG,YDEG)
+void build_example(X,Y,XDEG,YDEG)
 long X,Y,XDEG,YDEG;
 
 {
@@ -169,8 +170,8 @@ long x,y,z,i,u,c;
   }
   
   /* print nodes */
-  printf("n %8d %10d\n", S, SUPPLY);
-  printf("n %8d %10d\n", T, -SUPPLY);
+  printf("n %8d t\n", S);//SUPPLY);
+  printf("n %8d t\n", T);//, -SUPPLY);
 
   /* print arcs */
   for (y = 0; y < Y; y++)
@@ -179,49 +180,49 @@ long x,y,z,i,u,c;
       for (i = 1; i <= XDEG; i++){
         z = (x+i) % X;
         if (z > x) {
-          printf("a %8d %8d %10d %10d %10d \n", 
+          printf("a %8d %8d %10d \n", 
                   grid_to_id(x, y),
-                  grid_to_id(z, y),
-                  0, capacity[arc_loc(x, y, z, y)],
-                  cost[arc_loc(x, y, z, y)]);
+                  grid_to_id(z, y), //0
+                  capacity[arc_loc(x, y, z, y)]);
+                  //, cost[arc_loc(x, y, z, y)]);
 	}
         else {
           if (grid_to_id(x, y) != T)
-            printf("a %8d %8d %10d %10d %10d \n", 
+            printf("a %8d %8d %10d \n", 
                     grid_to_id(x, y),
                     T,
-                    0, capacity[arc_loc(x, y, z, y)],
-                    cost[arc_loc(x, y, z, y)]);
+                    capacity[arc_loc(x, y, z, y)]);
+                    //cost[arc_loc(x, y, z, y)]);
           if (grid_to_id(z, y) != S)
-            printf("a %8d %8d %10d %10d %10d \n", 
+            printf("a %8d %8d %10d \n", 
                     S,
                     grid_to_id(z, y),
-                    0, capacity[arc_loc(x, y, z, y)],
-                    cost[arc_loc(x, y, z, y)]);
+                    capacity[arc_loc(x, y, z, y)]);
+                    //cost[arc_loc(x, y, z, y)]);
          }
       }
       /* y direction */
       for (i = 1; i <= YDEG; i++){
         z = (y+i) % Y;
-        printf("a %8d %8d %10d %10d %10d \n", 
+        printf("a %8d %8d %10d \n", 
                 grid_to_id(x, y),
                 grid_to_id(x, z),
-                0, capacity[arc_loc(x, y, x, z)],
-                cost[arc_loc(x, y, x, z)]);
+                capacity[arc_loc(x, y, x, z)]);
+                //cost[arc_loc(x, y, x, z)]);
       }
     }
   if (EXTRA_N > 0) {
     /* connect extra nodes */
-    printf("a %8d %8d %10d %10d %10d \n",
+    printf("a %8d %8d %10d \n",
             S, X*Y+1,
-            0, SMALLCAP, MAXCOST/2);
-    printf("a %8d %8d %10d %10d %10d \n",
+            SMALLCAP);//, MAXCOST/2);
+    printf("a %8d %8d %10d \n",
             N, T,
-            0, SMALLCAP, MAXCOST/2);
+            SMALLCAP);
     for (i = 1; i < EXTRA_N; i++)
-      printf("a %8d %8d %10d %10d %10d \n",
+      printf("a %8d %8d %10d \n",
               X*Y+i, X*Y+i+1,
-              0, SMALLCAP, MAXCOST/2);
+              SMALLCAP);
 
     for (i = 1; i<= EXTRA_M; i++) {
       /* select random grid node other then S,T */
@@ -229,13 +230,13 @@ long x,y,z,i,u,c;
       /* select random extra node */
       y = random_int(X*Y + 1, N);
       if (random_bit())
-        printf("a %8d %8d %10d %10d %10d \n",
+        printf("a %8d %8d %10d \n",
                 x,y,
-                0, random_capacity(XDEG), random_cost(1));
+                random_capacity(XDEG));
       else
-        printf("a %8d %8d %10d %10d %10d \n",
+        printf("a %8d %8d %10d \n",
                 y,x,
-                0, random_capacity(XDEG), random_cost(1));
+                random_capacity(XDEG));//, random_cost(1));
     }
   }
   else
@@ -248,22 +249,22 @@ long x,y,z,i,u,c;
         y = random_int(1, X*Y-1);
       while (x == y);
       /* connect x and y */
-      printf("a %8d %8d %10d %10d %10d \n",
+      printf("a %8d %8d %10d \n",
               x,y,
-              0, random_capacity(XDEG), random_cost(1));
+              random_capacity(XDEG));//, random_cost(1));
     }
 
   /* return path */
   for (x = 0; x <  X; x++) {
     for (y = 0; y < Y-1; y++) {
-      printf("a %8d %8d %10d %10d %10d \n",
+      printf("a %8d %8d %10d \n",
               grid_to_id(x, y), grid_to_id(x, y+1),
-              0, SUPPLY, RETCOST);
+              SUPPLY);//, RETCOST);
     }
     if (x < X-1)
-      printf("a %8d %8d %10d %10d %10d \n",
+      printf("a %8d %8d %10d \n",
               grid_to_id(x, Y-1), grid_to_id(x+1, 0),
-              0, SUPPLY, RETCOST);
+              SUPPLY);//, RETCOST);
   }
 }
 
@@ -286,7 +287,7 @@ long extra_arcs()
 }
 
 
-main(argc, argv)
+void main(argc, argv)
 int argc;
 char* argv[];
 
@@ -379,7 +380,7 @@ char* argv[];
 
   printf("c X=%d Y=%d XDEG=%d YDEG=%d\n",
          X, Y, XDEG, YDEG);
-  printf("p min %d %d\n", N, M);
+  printf("p max %d %d\n", N, M);
   build_example(X,Y,XDEG,YDEG);
 
 

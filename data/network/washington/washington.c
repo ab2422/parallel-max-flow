@@ -2,8 +2,10 @@
 
 /* graph.h */
 
+#include "washington.h"
 #include <sys/time.h>
 #include <stdio.h>
+#include <stdlib.h>
 /*#include <time.h>
 */
 #include <ctype.h>
@@ -13,186 +15,11 @@
 
 #define DATA_DIRECTORY "/local/users/anderson/netflow/data/"
 
-#define FAILURE    0
-#define SUCCESS    1
-#define FALSE      0
-#define TRUE       1
-
-
-#define MAX_N     20000  
-/* #define MAX_N 60 */
-
-#define MAX_CAP   100000000
-
-/* Dimacs problem types */
-#define UNDEFINED        0
-#define MINCOSTFLOW      1
-#define MAXFLOW          2
-#define ASSIGNMENT       3
-
-typedef struct enode {
-  struct enode *next;
-  struct enode *mate;
-  int c;
-  int f;
-  int h;
-  int t;
-  int flag;
-} Edge;
-
-
-typedef struct {
-  Edge *A[MAX_N];
-  int V[MAX_N];
-  int size;
-  int max_v;
-} Graph;
-
-typedef struct {
-  int head, tail, size;
-  int *data;
-} Queue;
-
-
-
-
-
-#define MAX_RANGE 1000000
-#define MAX_DEGREE 20
-#define VERY_BIG 1000000
-
 int Range[] = {1000000, 500000, 250000, 125000, 62500, 31250,
 		 15625, 7812, 3906, 1953, 976, 488, 244, 122,
 		 61, 31, 15, 7, 4, 2};
 
 
-main(argc, argv)
-int argc;
-char *argv[];
-{
-  Graph *G, *Mesh(), *RLevel(), *R2Level(), *Match(), *SquareMesh(), 
-        *BasicLine(), *ExponentialLine(), *DExponentialLine(), *DinicBadCase(),
-        *GoldBadCase(), *Cheryian();
-
-  FILE *f;
-  int dim1, dim2, range, fct, s, t;
-
-  InitRandom(0);
-
-  if (argc != 6)
-    Barf("Usage: makegraph fct dim1 dim2 range file");
-
-  fct = atoi(argv[1]);
-  dim1 = atoi(argv[2]);
-  dim2 = atoi(argv[3]);
-  range = atoi(argv[4]);
-
-  if ((f = fopen(argv[5], "w")) == NULL)
-    Barf("File Error");
-
-  switch(fct){
-  case 1:
-    fprintf(f, "c Mesh Graph\n");
-    fprintf(f, "c %d Rows, %d columns, capacities in range [0, %d]\n",
-	    dim1, dim2, range);
-    G = Mesh(dim1, dim2, range);
-    s = 0;
-    t = G->size - 1;
-    break;
-  case 2:
-    fprintf(f, "c Random Leveled Graph\n");
-    fprintf(f, "c %d Rows, %d columns, capacities in range [0, %d]\n",
-	    dim1, dim2, range);
-    G = RLevel(dim1, dim2, range);
-    s = 0;
-    t = G->size - 1;
-    break;
-  case 3:
-    fprintf(f, "c Random 2 Leveled Graph\n");
-    fprintf(f, "c %d Rows, %d columns, capacities in range [0, %d]\n",
-	    dim1, dim2, range);
-    G = RLevel(dim1, dim2, range);
-    s = 0;
-    t = G->size - 1;
-    break;
-  case 4:
-    fprintf(f, "c Matching Graph\n");
-    fprintf(f, "c %d vertices, %d degree\n",
-	    dim1, dim2);
-    G = Match(dim1, dim2);
-    s = 0;
-    t = G->size - 1;
-    break;
-
-  case 5:
-    fprintf(f, "c Square Mesh\n");
-    fprintf(f, "c %d x %d vertices, %d degree, range [0,%d]\n", 
-	    dim1, dim1, dim2, range);
-    G = SquareMesh(dim1, dim2, range);
-    s = 0;
-    t = G->size - 1;
-    break;
-
-  case 6:
-    fprintf(f, "c Basic Line Mesh\n");
-    fprintf(f, "c %d x %d vertices, degree d\n", 
-	    dim1, dim2, range);
-    G = BasicLine(dim1, dim2, range);
-    s = 0;
-    t = G->size - 1;
-    break;
-
-  case 7:
-    fprintf(f, "c Exponential Line\n");
-    fprintf(f, "c %d x %d vertices, degree %d\n", 
-	    dim1, dim2, range);
-    G = ExponentialLine(dim1, dim2, range);
-    s = 0;
-    t = G->size - 1;
-    break;
-
-  case 8:
-    fprintf(f, "c Double Exponential Line\n");
-    fprintf(f, "c %d x %d vertices, degree %d\n", 
-	    dim1, dim2, range);
-    G = DExponentialLine(dim1, dim2, range);
-    s = 0;
-    t = G->size - 1;
-    break;
-
-  case 9:
-    fprintf(f, "c Line Graph - Bad case for Dinics\n");
-    fprintf(f, "c %d vertices\n", dim1);
-    G = DinicBadCase(dim1);
-    s = 0;
-    t = G->size - 1;
-    break;
-
-  case 10:
-    fprintf(f, "c  Bad case for Goldberg\n");
-    fprintf(f, "c %d vertices\n", dim1);
-    G = GoldBadCase(dim1);
-    s = 0;
-    t = G->size - 1;
-    break;
-
-  case 11:
-    fprintf(f, "c  Cheryian Graph\n");
-    fprintf(f, "c n = %d, m = %d, c = %d, total vertices %d \n", 
-	    dim1, dim2, range, 4*dim2*range + 6 + dim1);
-    G = Cheryian(dim1, dim2, range);    
-    s = 0;
-    t = G->size - 1;
-    break;
-
-  default:
-    Barf("Undefined class");
-    break;
-
-  }
-
-  GraphOutput(G, f, s, t);
-}
 
 Graph *Mesh(d1, d2, r)
 int d1, d2, r;
@@ -602,7 +429,7 @@ int n, m, c;
   return G;
 }
 
-Gadget(a, b, n, m, c, G)
+void Gadget(a, b, n, m, c, G)
 int a, b, n, m, c;
 Graph *G;
 {
@@ -619,7 +446,7 @@ Graph *G;
   }
 }
 
-Bridge(a, b, n, G)
+void Bridge(a, b, n, G)
 int a, b, n;
 Graph *G;
 {
@@ -638,14 +465,14 @@ Graph *G;
   }
 }
 
-Sink(k, G)
+void Sink(k, G)
 int k;
 Graph *G;
 {
   AddEdge(k, NewVertex(G), VERY_BIG, G);
 }
 
-NewVertex(G)
+int NewVertex(G)
 Graph *G;
 {
   AddVertex(G->size, G);
@@ -656,7 +483,7 @@ Graph *G;
 /* manip.c */
 
 
-InitGraph(G)
+void InitGraph(G)
 Graph *G;
 {
   int i;
@@ -694,7 +521,7 @@ Graph *G1;
   return G2;
 }
 
-AddVertex(v, G)
+void AddVertex(v, G)
 int v;
 Graph *G;
 {
@@ -708,7 +535,7 @@ Graph *G;
 }
 
 
-AddEdge(v1, v2, a, G)
+void AddEdge(v1, v2, a, G)
 int v1, v2, a;
 Graph *G;
 {
@@ -756,7 +583,7 @@ Graph *G;
   return (Edge *) 0;
 }
 
-UEdgeArray(E, m, G)
+void UEdgeArray(E, m, G)
 Edge *E[];
 int m;
 Graph *G;
@@ -818,7 +645,7 @@ int n;
   return p;
 }
 
-Barf(s)
+void Barf(s)
 char *s;
 {
   fprintf(stderr, "%s\n", s);
@@ -850,7 +677,7 @@ FILE *f;
 }
 
 /* Skip whitespace */
-Skip(f)
+void Skip(f)
 FILE *f;
 {
   char c;
@@ -887,7 +714,7 @@ char *s1, *s2;
 
 
 
-StrAppend(s1, s2, s3)
+void StrAppend(s1, s2, s3)
 char *s1, *s2, *s3;
 {
   while (*s1)
@@ -923,7 +750,7 @@ FILE *f;
   return v;
 }
 
-PutInt(i, f)
+void PutInt(i, f)
 int i;
 FILE *f;
 {
@@ -1028,7 +855,7 @@ int n;
   return Q;
 }
 
-Dequeue(Q)
+int Dequeue(Q)
 Queue *Q;
 {
   int v;
@@ -1042,7 +869,7 @@ Queue *Q;
   return v;
 }
 
-Enqueue(Q, k)
+void Enqueue(Q, k)
 Queue *Q;
 int k;
 {
@@ -1061,7 +888,7 @@ Queue *Q;
                               : Q->tail - Q->head + Q->size;
 }
 
-QueueEmpty(Q)
+int QueueEmpty(Q)
 Queue *Q;
 {
   return Q->head == Q->tail;
@@ -1081,7 +908,7 @@ Queue *Q;
    It is assumed that the length of perm is n.  The algorithm used makes
    a pass through the array, randomly switching elements of the array.
 */
-RandomPermutation (perm, n)
+void RandomPermutation (perm, n)
 int perm[], n;
 {
     int i, j, t;
@@ -1094,7 +921,7 @@ int perm[], n;
     }
 }
 
-RandPerm (perm, n)
+void RandPerm (perm, n)
 int perm[], n;
 {
     int i, j, t;
@@ -1125,7 +952,7 @@ int low, high;
    If the seed is zero, then the time of day is used to intialize the random 
    number generator. 
 */
-InitRandom (seed)
+void InitRandom (seed)
 int seed;
 {
     struct timeval tp;
@@ -1141,7 +968,7 @@ int seed;
 /* RandomSubset - return n distinct values, randomly selected between
 high and low, the algorithm is inefficient if n is large - this could
 be improved */
-RandomSubset(low, high, n, x)
+void RandomSubset(low, high, n, x)
 int low, high, n, *x;
 {
   int i, j, r, flag;
@@ -1349,7 +1176,7 @@ int s;
   OutputFlow(G, stdout, s);
 }
 
-PrintGraph(G)
+void PrintGraph(G)
 Graph *G;
 {
   int i;
@@ -1413,4 +1240,131 @@ FILE *f;
 }
 
 
+void main(argc, argv)
+int argc;
+char *argv[];
+{
+  Graph *G, *Mesh(), *RLevel(), *R2Level(), *Match(), *SquareMesh(), 
+        *BasicLine(), *ExponentialLine(), *DExponentialLine(), *DinicBadCase(),
+        *GoldBadCase(), *Cheryian();
+
+  FILE *f;
+  int dim1, dim2, range, fct, s, t;
+
+  InitRandom(0);
+
+  if (argc != 6)
+    Barf("Usage: makegraph fct dim1 dim2 range file");
+
+  fct = atoi(argv[1]);
+  dim1 = atoi(argv[2]);
+  dim2 = atoi(argv[3]);
+  range = atoi(argv[4]);
+
+  if ((f = fopen(argv[5], "w")) == NULL)
+    Barf("File Error");
+
+  switch(fct){
+  case 1:
+    fprintf(f, "c Mesh Graph\n");
+    fprintf(f, "c %d Rows, %d columns, capacities in range [0, %d]\n",
+	    dim1, dim2, range);
+    G = Mesh(dim1, dim2, range);
+    s = 0;
+    t = G->size - 1;
+    break;
+  case 2:
+    fprintf(f, "c Random Leveled Graph\n");
+    fprintf(f, "c %d Rows, %d columns, capacities in range [0, %d]\n",
+	    dim1, dim2, range);
+    G = RLevel(dim1, dim2, range);
+    s = 0;
+    t = G->size - 1;
+    break;
+  case 3:
+    fprintf(f, "c Random 2 Leveled Graph\n");
+    fprintf(f, "c %d Rows, %d columns, capacities in range [0, %d]\n",
+	    dim1, dim2, range);
+    G = RLevel(dim1, dim2, range);
+    s = 0;
+    t = G->size - 1;
+    break;
+  case 4:
+    fprintf(f, "c Matching Graph\n");
+    fprintf(f, "c %d vertices, %d degree\n",
+	    dim1, dim2);
+    G = Match(dim1, dim2);
+    s = 0;
+    t = G->size - 1;
+    break;
+
+  case 5:
+    fprintf(f, "c Square Mesh\n");
+    fprintf(f, "c %d x %d vertices, %d degree, range [0,%d]\n", 
+	    dim1, dim1, dim2, range);
+    G = SquareMesh(dim1, dim2, range);
+    s = 0;
+    t = G->size - 1;
+    break;
+
+  case 6:
+    fprintf(f, "c Basic Line Mesh\n");
+    fprintf(f, "c %d x %d vertices, degree d\n", 
+	    dim1, dim2, range);
+    G = BasicLine(dim1, dim2, range);
+    s = 0;
+    t = G->size - 1;
+    break;
+
+  case 7:
+    fprintf(f, "c Exponential Line\n");
+    fprintf(f, "c %d x %d vertices, degree %d\n", 
+	    dim1, dim2, range);
+    G = ExponentialLine(dim1, dim2, range);
+    s = 0;
+    t = G->size - 1;
+    break;
+
+  case 8:
+    fprintf(f, "c Double Exponential Line\n");
+    fprintf(f, "c %d x %d vertices, degree %d\n", 
+	    dim1, dim2, range);
+    G = DExponentialLine(dim1, dim2, range);
+    s = 0;
+    t = G->size - 1;
+    break;
+
+  case 9:
+    fprintf(f, "c Line Graph - Bad case for Dinics\n");
+    fprintf(f, "c %d vertices\n", dim1);
+    G = DinicBadCase(dim1);
+    s = 0;
+    t = G->size - 1;
+    break;
+
+  case 10:
+    fprintf(f, "c  Bad case for Goldberg\n");
+    fprintf(f, "c %d vertices\n", dim1);
+    G = GoldBadCase(dim1);
+    s = 0;
+    t = G->size - 1;
+    break;
+
+  case 11:
+    fprintf(f, "c  Cheryian Graph\n");
+    fprintf(f, "c n = %d, m = %d, c = %d, total vertices %d \n", 
+	    dim1, dim2, range, 4*dim2*range + 6 + dim1);
+    G = Cheryian(dim1, dim2, range);    
+    s = 0;
+    t = G->size - 1;
+    break;
+
+  default:
+    Barf("Undefined class");
+    break;
+
+  }
+
+  GraphOutput(G, f, s, t);
+}
 
